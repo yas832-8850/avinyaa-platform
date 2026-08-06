@@ -35,12 +35,20 @@ export default async function DashboardPage() {
           </p>
         </div>
         {profile?.role === "super_admin" && (
-          
-            <a href="/dashboard/carriers"
-            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Manage carriers
-          </a>
+          <div className="flex gap-2">
+            
+             <a href="/dashboard/carriers"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Manage carriers
+            </a>
+            
+             <a href="/dashboard/margin-rules"
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Margin rules
+            </a>
+          </div>
         )}
       </div>
 
