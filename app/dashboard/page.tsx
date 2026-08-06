@@ -37,6 +37,12 @@ export default async function DashboardPage() {
         {profile?.role === "super_admin" && (
           <div className="flex gap-2">
             
+             <a href="/dashboard/jobs/new"
+              className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+            >
+              + New job
+            </a>
+            
              <a href="/dashboard/carriers"
               className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
