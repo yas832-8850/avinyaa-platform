@@ -1,7 +1,3 @@
-// This is a SERVER component (no "use client") - it runs before the
-// page ever reaches the browser, and talks to Supabase using the
-// logged-in user's session (via cookies, set up in lib/supabase/server.ts)
-
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -16,16 +12,12 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Get this user's profile (which org they belong to, their role)
   const { data: profile } = await supabase
     .from("profiles")
     .select("*, organisations(name, type)")
     .eq("id", user!.id)
     .single();
 
-  // Get jobs - Row Level Security automatically limits this to
-  // the user's own org (or ALL orgs if they're a super_admin).
-  // No manual "where org_id = ..." needed here - the database enforces it.
   const { data: jobs } = await supabase
     .from("jobs")
     .select("*")
@@ -33,12 +25,24 @@ export default async function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <h1 className="text-2xl font-semibold text-gray-900">
-        {profile?.organisations?.name ?? "Dashboard"}
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Signed in as {user!.email} — role: {profile?.role}
-      </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {profile?.organisations?.name ?? "Dashboard"}
+          </h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Signed in as {user!.email} — role: {profile?.role}
+          </p>
+        </div>
+        {profile?.role === "super_admin" && (
+          
+            <a href="/dashboard/carriers"
+            className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Manage carriers
+          </a>
+        )}
+      </div>
 
       <div className="mt-8">
         <h2 className="text-lg font-medium text-gray-900">Jobs</h2>
