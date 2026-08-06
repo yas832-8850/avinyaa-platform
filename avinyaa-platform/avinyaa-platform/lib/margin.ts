@@ -1,0 +1,50 @@
+// The margin engine, Phase 0/1 version.
+// Matches "Margin Rules — two levels only" from the project plan:
+//   1. A carrier-specific rule for this client, if one exists
+//   2. Otherwise, the client's default rule (carrier_id = null)
+//
+// This mirrors the priority-resolution logic from the full spec,
+// just with two priority levels instead of four.
+
+export type MarginRule = {
+  org_id: string;
+  carrier_id: string | null; // null = default rule for this client
+  margin_percent: number;
+};
+
+export function resolveMarginRule(
+  rules: MarginRule[],
+  orgId: string,
+  carrierId: string
+): MarginRule | null {
+  // Priority 1: a rule specific to this client AND this carrier
+  const specific = rules.find(
+    (r) => r.org_id === orgId && r.carrier_id === carrierId
+  );
+  if (specific) return specific;
+
+  // Priority 2: this client's default rule (no carrier specified)
+  const clientDefault = rules.find(
+    (r) => r.org_id === orgId && r.carrier_id === null
+  );
+  if (clientDefault) return clientDefault;
+
+  // No rule found — the caller should decide what to do
+  // (e.g. block the booking, or fall back to a platform-wide default)
+  return null;
+}
+
+export function calculateSellRate(costRate: number, marginPercent: number): number {
+  const sellRate = costRate * (1 + marginPercent / 100);
+  // Round to 2 decimal places - we're dealing with money
+  return Math.round(sellRate * 100) / 100;
+}
+
+// Example of how these two functions are used together when a
+// booking is created (see app/dashboard/new-job/page.tsx):
+//
+//   const rule = resolveMarginRule(rules, clientOrgId, carrierId);
+//   if (!rule) { /* handle: no margin configured for this client/carrier */ }
+//   const sellRate = calculateSellRate(costRate, rule.margin_percent);
+//   // sellRate + rule.margin_percent + costRate all get SAVED on the job row
+//   // (the "snapshot" — see schema.sql comments on the jobs table)
