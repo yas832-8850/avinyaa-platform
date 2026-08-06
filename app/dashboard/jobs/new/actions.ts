@@ -46,7 +46,7 @@ export async function createJob(formData: FormData) {
     org_id: orgId,
     carrier_id: carrierId,
     job_type: jobType,
-    status: "quoted",
+    status: "booked",
     cost_rate: costRate,
     margin_percent: rule.margin_percent,
     sell_rate: sellRate,
