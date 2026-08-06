@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import JobStatusActions from "./job-status-actions";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -68,16 +69,22 @@ export default async function DashboardPage() {
                 <th className="py-2">Status</th>
                 <th className="py-2">Sell rate</th>
                 <th className="py-2">Booked</th>
+                <th className="py-2">Actions</th>
               </tr>
             </thead>
             <tbody>
               {jobs.map((job) => (
                 <tr key={job.id} className="border-b">
                   <td className="py-2 capitalize">{job.job_type}</td>
-                  <td className="py-2 capitalize">{job.status}</td>
+                  <td className="py-2 capitalize">
+                    {job.status.replace("_", " ")}
+                  </td>
                   <td className="py-2">${job.sell_rate}</td>
                   <td className="py-2 text-gray-500">
                     {new Date(job.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="py-2">
+                    <JobStatusActions jobId={job.id} status={job.status} />
                   </td>
                 </tr>
               ))}
