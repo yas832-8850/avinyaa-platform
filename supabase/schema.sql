@@ -151,3 +151,33 @@ create policy "insert own org jobs" on jobs
   create policy "update own org jobs" on jobs
   for update using (org_id = my_org_id() or is_super_admin())
   with check (org_id = my_org_id() or is_super_admin());
+  -- ---------------------------------------------------------------
+-- STORAGE: PROOF OF DELIVERY (PODs)
+-- Bucket "pods" (created manually in Supabase Storage UI, private).
+-- Files are stored as pods/{job_id}/{filename}.
+-- ---------------------------------------------------------------
+
+-- Only super_admin can upload PODs
+create policy "super_admin can upload pods" on storage.objects
+  for insert to authenticated
+  with check (bucket_id = 'pods' and is_super_admin());
+
+-- super_admin can view all PODs
+create policy "super_admin can view all pods" on storage.objects
+  for select to authenticated
+  using (bucket_id = 'pods' and is_super_admin());
+
+-- Clients can view PODs only for their own org's jobs
+create policy "clients can view own org pods" on storage.objects
+  for select to authenticated
+  using (
+    bucket_id = 'pods'
+    and (storage.foldername(name))[1]::uuid in (
+      select id from jobs where org_id = my_org_id()
+    )
+  );
+
+-- Only super_admin can delete PODs
+create policy "super_admin can delete pods" on storage.objects
+  for delete to authenticated
+  using (bucket_id = 'pods' and is_super_admin());
