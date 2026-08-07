@@ -80,3 +80,17 @@ export function calculateCostRate(
 
   return Math.round(total * 100) / 100;
 }
+// Calculates the "chargeable weight" for a shipment — the greater of
+// actual weight and dimensional (cubic) weight, which is how Australian
+// freight carriers determine billing weight for oversized-but-light items.
+export function calculateChargeableWeight(
+  lengthCm: number,
+  widthCm: number,
+  heightCm: number,
+  actualWeightKg: number,
+  cubicFactor: number
+): number {
+  const volumeM3 = (lengthCm / 100) * (widthCm / 100) * (heightCm / 100);
+  const dimensionalWeightKg = volumeM3 * cubicFactor;
+  return Math.max(actualWeightKg, dimensionalWeightKg);
+}

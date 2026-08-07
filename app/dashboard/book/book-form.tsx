@@ -2,11 +2,12 @@
 
 import { useState, useRef, useMemo } from "react";
 import { bookJob } from "./actions";
-import { resolveMarginRule, calculateSellRate, calculateCostRate, type MarginRule, type RateCard } from "@/lib/margin";
+import { resolveMarginRule, calculateSellRate, calculateCostRate, calculateChargeableWeight, type MarginRule, type RateCard } from "@/lib/margin";
 
 type Carrier = {
   id: string;
   name: string;
+  cubic_factor: number;
 };
 
 export default function BookForm({
@@ -29,25 +30,34 @@ export default function BookForm({
 
   const [carrierId, setCarrierId] = useState("");
   const [zone, setZone] = useState("");
+  const [lengthCm, setLengthCm] = useState("");
+  const [widthCm, setWidthCm] = useState("");
+  const [heightCm, setHeightCm] = useState("");
   const [weightKg, setWeightKg] = useState("");
 
-  // Live preview — mirrors the server calculation exactly, but this is
-  // ONLY for display. The server always recalculates independently.
   const preview = useMemo(() => {
-    if (!carrierId || !zone || !weightKg) return null;
+    if (!carrierId || !zone || !lengthCm || !widthCm || !heightCm || !weightKg) return null;
 
+    const l = Number(lengthCm);
+    const w = Number(widthCm);
+    const h = Number(heightCm);
     const weight = Number(weightKg);
-    if (isNaN(weight) || weight <= 0) return null;
+    if ([l, w, h, weight].some((n) => isNaN(n) || n <= 0)) return null;
 
-    const costRate = calculateCostRate(rateCards, carrierId, zone, weight);
+    const carrier = carriers.find((c) => c.id === carrierId);
+    if (!carrier) return null;
+
+    const chargeableWeight = calculateChargeableWeight(l, w, h, weight, carrier.cubic_factor);
+
+    const costRate = calculateCostRate(rateCards, carrierId, zone, chargeableWeight);
     if (costRate === null) return { noRateCard: true as const };
 
     const rule = resolveMarginRule(rules, orgId, carrierId);
     if (!rule) return { noRateCard: false as const, noRule: true as const };
 
     const sellRate = calculateSellRate(costRate, rule.margin_percent);
-    return { noRateCard: false as const, noRule: false as const, sellRate };
-  }, [carrierId, zone, weightKg, rateCards, rules, orgId]);
+    return { noRateCard: false as const, noRule: false as const, sellRate, chargeableWeight };
+  }, [carrierId, zone, lengthCm, widthCm, heightCm, weightKg, rateCards, rules, orgId, carriers]);
 
   async function handleSubmit(formData: FormData) {
     setLoading(true);
@@ -67,132 +77,78 @@ export default function BookForm({
     formRef.current?.reset();
     setCarrierId("");
     setZone("");
+    setLengthCm("");
+    setWidthCm("");
+    setHeightCm("");
     setWeightKg("");
   }
 
   return (
-    <form
-      ref={formRef}
-      action={handleSubmit}
-      className="flex flex-col gap-4 rounded-lg border bg-gray-50 p-6"
-    >
+    <form ref={formRef} action={handleSubmit} className="flex flex-col gap-4 rounded-lg border bg-gray-50 p-6">
       <div className="flex flex-wrap gap-3">
         <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Carrier
-          </label>
-          <select
-            name="carrier_id"
-            required
-            value={carrierId}
-            onChange={(e) => setCarrierId(e.target.value)}
-            className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
+          <label className="block text-xs font-medium text-gray-700">Carrier</label>
+          <select name="carrier_id" required value={carrierId} onChange={(e) => setCarrierId(e.target.value)} className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm">
             <option value="">Select carrier...</option>
-            {carriers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
+            {carriers.map((c) => (<option key={c.id} value={c.id}>{c.name}</option>))}
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Zone
-          </label>
-          <select
-            name="zone"
-            required
-            value={zone}
-            onChange={(e) => setZone(e.target.value)}
-            className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
+          <label className="block text-xs font-medium text-gray-700">Zone</label>
+          <select name="zone" required value={zone} onChange={(e) => setZone(e.target.value)} className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm">
             <option value="">Select zone...</option>
-            {zones.map((z) => (
-              <option key={z} value={z}>
-                {z}
-              </option>
-            ))}
+            {zones.map((z) => (<option key={z} value={z}>{z}</option>))}
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Job type
-          </label>
-          <select
-            name="job_type"
-            required
-            className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
+          <label className="block text-xs font-medium text-gray-700">Job type</label>
+          <select name="job_type" required className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm">
             <option value="freight">Freight</option>
             <option value="install">Install</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Weight (kg)
-          </label>
-          <input
-            name="weight_kg"
-            type="number"
-            step="0.1"
-            min="0.1"
-            required
-            value={weightKg}
-            onChange={(e) => setWeightKg(e.target.value)}
-            placeholder="e.g. 25"
-            className="mt-1 w-28 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          />
+          <label className="block text-xs font-medium text-gray-700">Package type</label>
+          <select name="package_category" required className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm">
+            <option value="Documents">Documents</option>
+            <option value="Package/Pallet">Package/Pallet</option>
+          </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-700">
-          Notes (optional)
-        </label>
-        <textarea
-          name="notes"
-          rows={2}
-          placeholder="Any extra details..."
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        />
+        <p className="text-xs font-medium text-gray-700">Dimensions & weight</p>
+        <div className="mt-1 flex flex-wrap gap-3">
+          <input name="length_cm" type="number" step="0.1" min="0.1" required value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} placeholder="Length (cm)" className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+          <input name="width_cm" type="number" step="0.1" min="0.1" required value={widthCm} onChange={(e) => setWidthCm(e.target.value)} placeholder="Width (cm)" className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+          <input name="height_cm" type="number" step="0.1" min="0.1" required value={heightCm} onChange={(e) => setHeightCm(e.target.value)} placeholder="Height (cm)" className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+          <input name="weight_kg" type="number" step="0.1" min="0.1" required value={weightKg} onChange={(e) => setWeightKg(e.target.value)} placeholder="Weight (kg)" className="w-32 rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-gray-700">Notes (optional)</label>
+        <textarea name="notes" rows={2} placeholder="Any extra details..." className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm" />
       </div>
 
       <div className="rounded-md border border-dashed border-gray-300 bg-white p-3 text-sm">
-        {!preview && (
-          <p className="text-gray-400">
-            Select carrier, zone, and weight to see your quote.
-          </p>
-        )}
-        {preview?.noRateCard && (
-          <p className="text-amber-600">
-            No pricing is set up for this carrier/zone yet. Contact Avinyaa.
-          </p>
-        )}
-        {preview && !preview.noRateCard && preview.noRule && (
-          <p className="text-amber-600">
-            Your account isn&apos;t set up for pricing yet. Contact Avinyaa.
-          </p>
-        )}
+        {!preview && (<p className="text-gray-400">Fill in all fields to see your quote.</p>)}
+        {preview?.noRateCard && (<p className="text-amber-600">No pricing is set up for this carrier/zone yet. Contact Avinyaa.</p>)}
+        {preview && !preview.noRateCard && preview.noRule && (<p className="text-amber-600">Your account isn&apos;t set up for pricing yet. Contact Avinyaa.</p>)}
         {preview && !preview.noRateCard && !preview.noRule && (
           <p className="text-gray-700">
-            Your quote:{" "}
-            <span className="text-lg font-semibold text-gray-900">
-              ${preview.sellRate.toFixed(2)}
-            </span>
+            Chargeable weight: <span className="font-medium">{preview.chargeableWeight.toFixed(1)}kg</span>
+            {" · "}
+            Your quote: <span className="text-lg font-semibold text-gray-900">${preview.sellRate.toFixed(2)}</span>
           </p>
         )}
       </div>
 
       <div>
-        <button
-          type="submit"
-          disabled={loading || !preview || preview.noRateCard || preview.noRule}
-          className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={loading || !preview || preview.noRateCard || preview.noRule} className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50">
           {loading ? "Booking..." : "Book job"}
         </button>
       </div>

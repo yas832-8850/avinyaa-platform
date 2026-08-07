@@ -29,7 +29,7 @@ export default async function BookPage() {
 
   const { data: carriers } = await supabase
     .from("carriers")
-    .select("id, name")
+    .select("id, name, cubic_factor")
     .eq("status", "active")
     .order("name");
 
