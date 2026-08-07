@@ -145,3 +145,7 @@ create policy "view own org jobs" on jobs
 
 create policy "insert own org jobs" on jobs
   for insert with check (org_id = my_org_id() or is_super_admin());
+  
+  create policy "update own org jobs" on jobs
+  for update using (org_id = my_org_id() or is_super_admin())
+  with check (org_id = my_org_id() or is_super_admin());
