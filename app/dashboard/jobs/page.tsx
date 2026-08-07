@@ -108,7 +108,12 @@ export default async function JobsListPage({
                   <td className="py-2 capitalize">{job.status.replace("_", " ")}</td>
                   <td className="py-2">${job.sell_rate}</td>
                   <td className="py-2 text-gray-500">{new Date(job.created_at).toLocaleDateString()}</td>
-                  <td className="py-2"><a href={`/dashboard/jobs/${job.id}`} className="text-xs font-medium text-gray-500 hover:underline">Edit</a></td>
+                  <td className="py-2">
+                    <a href={`/dashboard/jobs/${job.id}`} className="text-xs font-medium text-gray-500 hover:underline">Edit</a>
+                    {job.status === "completed" && (
+                      <a href={`/api/invoice/${job.id}`} target="_blank" className="ml-3 text-xs font-medium text-gray-500 hover:underline">Invoice</a>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
