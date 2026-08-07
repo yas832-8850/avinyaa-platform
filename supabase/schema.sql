@@ -47,6 +47,7 @@ create table carriers (
 create table carrier_rate_cards (
   id uuid primary key default gen_random_uuid(),
   carrier_id uuid not null references carriers(id),
+  zone text,                                                -- e.g. "NSW Metro", "Interstate"
   rate_basis text not null check (rate_basis in ('per_kg', 'flat', 'per_job')),
   rate_value numeric(10,2) not null,
   effective_from date not null default current_date,
