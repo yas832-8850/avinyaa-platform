@@ -19,6 +19,8 @@ export default async function DashboardPage() {
     .eq("id", user!.id)
     .single();
 
+  const isSuperAdmin = profile?.role === "super_admin";
+
   const { data: jobs } = await supabase
     .from("jobs")
     .select("*")
@@ -35,7 +37,7 @@ export default async function DashboardPage() {
             Signed in as {user!.email} — role: {profile?.role}
           </p>
         </div>
-        {profile?.role === "super_admin" && (
+        {isSuperAdmin && (
           <div className="flex gap-2">
             
              <a href="/dashboard/jobs/new"
@@ -60,16 +62,20 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-lg font-medium text-gray-900">Jobs</h2>
+        <h2 className="text-lg font-medium text-gray-900">
+          {isSuperAdmin ? "Jobs" : "Your jobs"}
+        </h2>
         {jobs && jobs.length > 0 ? (
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="border-b text-left text-gray-500">
                 <th className="py-2">Type</th>
                 <th className="py-2">Status</th>
-                <th className="py-2">Sell rate</th>
+                <th className="py-2">
+                  {isSuperAdmin ? "Sell rate" : "Rate"}
+                </th>
                 <th className="py-2">Booked</th>
-                <th className="py-2">Actions</th>
+                {isSuperAdmin && <th className="py-2">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -83,16 +89,20 @@ export default async function DashboardPage() {
                   <td className="py-2 text-gray-500">
                     {new Date(job.created_at).toLocaleDateString()}
                   </td>
-                  <td className="py-2">
-                    <JobStatusActions jobId={job.id} status={job.status} />
-                  </td>
+                  {isSuperAdmin && (
+                    <td className="py-2">
+                      <JobStatusActions jobId={job.id} status={job.status} />
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         ) : (
           <p className="mt-4 text-sm text-gray-500">
-            No jobs yet — this is expected on a fresh database.
+            {isSuperAdmin
+              ? "No jobs yet — this is expected on a fresh database."
+              : "No jobs yet for your account."}
           </p>
         )}
       </div>
