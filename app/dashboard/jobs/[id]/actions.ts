@@ -73,3 +73,25 @@ export async function updateJob(jobId: string, formData: FormData) {
   revalidatePath(`/dashboard/jobs/${jobId}`);
   return { success: true, sellRate };
 }
+export async function uploadPod(jobId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const file = formData.get("pod_file") as File;
+  if (!file || file.size === 0) {
+    return { error: "Please select a file to upload" };
+  }
+
+  const fileExt = file.name.split(".").pop();
+  const filePath = `${jobId}/${Date.now()}.${fileExt}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("pods")
+    .upload(filePath, file);
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  revalidatePath(`/dashboard/jobs/${jobId}`);
+  return { success: true };
+}

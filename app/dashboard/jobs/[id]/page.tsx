@@ -1,6 +1,7 @@
 import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EditJobForm from "./edit-job-form";
+import PodUpload from "./pod-upload";
 
 export default async function EditJobPage({
   params,
@@ -41,6 +42,16 @@ export default async function EditJobPage({
   if (!job) {
     notFound();
   }
+  const { data: podFiles } = await supabase.storage.from("pods").list(id);
+
+  const existingPods = await Promise.all(
+    (podFiles ?? []).map(async (file) => {
+      const { data } = await supabase.storage
+        .from("pods")
+        .createSignedUrl(`${id}/${file.name}`, 3600);
+      return { name: file.name, url: data?.signedUrl ?? "" };
+    })
+  );
 
   return (
     <div className="mx-auto max-w-3xl p-8">
@@ -58,6 +69,8 @@ export default async function EditJobPage({
       <div className="mt-6">
         <EditJobForm job={job} />
       </div>
+
+      <PodUpload jobId={id} existingPods={existingPods} />
     </div>
   );
 }
