@@ -128,15 +128,17 @@ create policy "view own profile" on profiles
 create policy "view own org" on organisations
   for select using (id = my_org_id() or is_super_admin());
 
--- Carriers & rate cards: master-account only (super_admin/dispatcher)
-create policy "carriers visible to master account" on carriers
-  for select using (is_super_admin());
-create policy "rate cards visible to master account" on carrier_rate_cards
-  for select using (is_super_admin());
+-- Carriers & rate cards: visible to ALL authenticated users (clients need
+-- to see carrier names and pricing to get quotes and book jobs themselves).
+create policy "carriers visible to authenticated users" on carriers
+  for select to authenticated using (true);
+create policy "rate cards visible to authenticated users" on carrier_rate_cards
+  for select to authenticated using (true);
 
--- Margin rules: master account manages them; clients never see raw rules
-create policy "margin rules visible to master account" on margin_rules
-  for select using (is_super_admin());
+-- Margin rules: a client can see their OWN org's margin rule (needed to
+-- calculate their own quotes), but never another org's. Super_admin sees all.
+create policy "margin rules visible to own org or super admin" on margin_rules
+  for select using (org_id = my_org_id() or is_super_admin());
 
 -- Jobs: THE key policy — a client only ever sees jobs where org_id
 -- matches their own org. Super_admin (you) sees everything.
