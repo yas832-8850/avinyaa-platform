@@ -50,8 +50,11 @@ export default async function DashboardPage() {
             {profile?.organisations?.name ?? "Dashboard"}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Signed in as {user!.email} — role: {profile?.role} · <SignOutButton />
+            Signed in as {user!.email} — role: {profile?.role}
           </p>
+          <div className="mt-1">
+            <SignOutButton />
+          </div>
         </div>
         <div className="flex gap-2">
           <a href="/dashboard/book" className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800">Book a job</a>
