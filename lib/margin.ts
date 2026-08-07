@@ -48,3 +48,35 @@ export function calculateSellRate(costRate: number, marginPercent: number): numb
 //   const sellRate = calculateSellRate(costRate, rule.margin_percent);
 //   // sellRate + rule.margin_percent + costRate all get SAVED on the job row
 //   // (the "snapshot" — see schema.sql comments on the jobs table)
+// Calculates the cost rate a carrier charges, based on their rate card
+// for a given zone and shipment weight.
+export type RateCard = {
+  carrier_id: string;
+  zone: string;
+  rate_basis: "flat" | "per_kg" | "per_job";
+  rate_value: number;
+};
+
+export function calculateCostRate(
+  rateCards: RateCard[],
+  carrierId: string,
+  zone: string,
+  weightKg: number
+): number | null {
+  const applicable = rateCards.filter(
+    (rc) => rc.carrier_id === carrierId && rc.zone === zone
+  );
+
+  if (applicable.length === 0) return null; // no rate card set up for this combo
+
+  let total = 0;
+  for (const rc of applicable) {
+    if (rc.rate_basis === "flat" || rc.rate_basis === "per_job") {
+      total += rc.rate_value;
+    } else if (rc.rate_basis === "per_kg") {
+      total += rc.rate_value * weightKg;
+    }
+  }
+
+  return Math.round(total * 100) / 100;
+}

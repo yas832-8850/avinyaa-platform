@@ -37,28 +37,36 @@ export default async function DashboardPage() {
             Signed in as {user!.email} — role: {profile?.role}
           </p>
         </div>
-        {isSuperAdmin && (
-          <div className="flex gap-2">
-            
-             <a href="/dashboard/jobs/new"
-              className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
-            >
-              + New job
-            </a>
-            
-             <a href="/dashboard/carriers"
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Manage carriers
-            </a>
-            
-             <a href="/dashboard/margin-rules"
-              className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              Margin rules
-            </a>
-          </div>
-        )}
+        <div className="flex gap-2">
+          
+           <a href="/dashboard/book"
+            className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800"
+          >
+            Book a job
+          </a>
+          {isSuperAdmin && (
+            <>
+              
+               <a href="/dashboard/jobs/new"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                + New job (manual)
+              </a>
+              
+               <a href="/dashboard/carriers"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Manage carriers
+              </a>
+              
+               <a href="/dashboard/margin-rules"
+                className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Margin rules
+              </a>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="mt-8">
