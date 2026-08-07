@@ -95,3 +95,17 @@ export async function uploadPod(jobId: string, formData: FormData) {
   revalidatePath(`/dashboard/jobs/${jobId}`);
   return { success: true };
 }
+export async function deletePod(jobId: string, fileName: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.storage
+    .from("pods")
+    .remove([`${jobId}/${fileName}`]);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/dashboard/jobs/${jobId}`);
+  return { success: true };
+}

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { uploadPod } from "./actions";
+import { uploadPod, deletePod } from "./actions";
 
 type PodFile = {
   name: string;
@@ -18,6 +18,7 @@ export default function PodUpload({
 }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deletingName, setDeletingName] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
 
@@ -38,6 +39,24 @@ export default function PodUpload({
     router.refresh();
   }
 
+  async function handleDelete(fileName: string) {
+    if (!confirm(`Delete ${fileName}? This can't be undone.`)) return;
+
+    setDeletingName(fileName);
+    setError(null);
+
+    const result = await deletePod(jobId, fileName);
+
+    setDeletingName(null);
+
+    if (result?.error) {
+      setError(result.error);
+      return;
+    }
+
+    router.refresh();
+  }
+
   return (
     <div className="mt-6 rounded-lg border bg-gray-50 p-6">
       <h2 className="text-sm font-medium text-gray-900">Proof of Delivery</h2>
@@ -45,8 +64,16 @@ export default function PodUpload({
       {existingPods.length > 0 ? (
         <ul className="mt-3 flex flex-col gap-2">
           {existingPods.map((pod) => (
-            <li key={pod.url}>
+            <li key={pod.url} className="flex items-center gap-3">
               <a href={pod.url} target="_blank" className="text-sm text-blue-600 hover:underline">{pod.name}</a>
+              <button
+                type="button"
+                onClick={() => handleDelete(pod.name)}
+                disabled={deletingName === pod.name}
+                className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50"
+              >
+                {deletingName === pod.name ? "Deleting..." : "Delete"}
+              </button>
             </li>
           ))}
         </ul>
