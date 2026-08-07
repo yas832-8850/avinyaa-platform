@@ -91,7 +91,15 @@ export default async function DashboardPage() {
                   </td>
                   {isSuperAdmin && (
                     <td className="py-2">
-                      <JobStatusActions jobId={job.id} status={job.status} />
+                      <div className="flex items-center gap-3">
+                        <JobStatusActions jobId={job.id} status={job.status} />
+                        
+                         <a href={`/dashboard/jobs/${job.id}`}
+                          className="text-xs font-medium text-gray-500 hover:underline"
+                        >
+                          Edit
+                        </a>
+                      </div>
                     </td>
                   )}
                 </tr>
