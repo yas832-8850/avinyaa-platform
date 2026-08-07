@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import JobStatusActions from "./job-status-actions";
+import SignOutButton from "./signout-button";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
             {profile?.organisations?.name ?? "Dashboard"}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Signed in as {user!.email} — role: {profile?.role}
+            Signed in as {user!.email} — role: {profile?.role} · <SignOutButton />
           </p>
         </div>
         <div className="flex gap-2">
