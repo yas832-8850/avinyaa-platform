@@ -47,10 +47,10 @@ export default async function DashboardPage() {
           {isSuperAdmin && (
             <>
               
-               <a href="/dashboard/jobs/new"
+               <a href="/dashboard/jobs"
                 className="rounded-md border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                + New job (manual)
+                All jobs
               </a>
               
                <a href="/dashboard/carriers"
