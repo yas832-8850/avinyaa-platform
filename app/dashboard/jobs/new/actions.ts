@@ -138,8 +138,8 @@ export async function createJobWithLines(
   const chargeableWeightKg = calculateTotalChargeableWeight(totalWeightKg, totalVolumeM3);
 
   const { data: rateCards, error: rateCardsError } = await supabase
-    .from("rate_cards")
-    .select("*");
+  .from("carrier_rate_cards")
+  .select("*");
 
   if (rateCardsError) {
     return { error: rateCardsError.message };
