@@ -112,3 +112,114 @@ export async function createJob(formData: FormData) {
   revalidatePath("/dashboard/jobs/new");
   return { success: true, sellRate };
 }
+import { calculateLineTotals, calculateTotalChargeableWeight, type JobLineInput } from "@/lib/margin";
+
+export type JobLineFormInput = JobLineInput & {
+  description?: string;
+  pack_type?: string;
+};
+
+export async function createJobWithLines(
+  orgId: string,
+  carrierId: string,
+  jobType: string,
+  zone: string,
+  lines: JobLineFormInput[],
+  notes?: string
+) {
+  const supabase = await createClient();
+
+  if (!lines || lines.length === 0) {
+    return { error: "At least one freight line is required." };
+  }
+
+  // Recalculate totals server-side — never trust client-submitted totals
+  const { totalVolumeM3, totalWeightKg } = calculateLineTotals(lines);
+  const chargeableWeightKg = calculateTotalChargeableWeight(totalWeightKg, totalVolumeM3);
+
+  const { data: rateCards, error: rateCardsError } = await supabase
+    .from("rate_cards")
+    .select("*");
+
+  if (rateCardsError) {
+    return { error: rateCardsError.message };
+  }
+
+  const costRate = calculateCostRate(
+    (rateCards ?? []) as RateCard[],
+    carrierId,
+    zone,
+    chargeableWeightKg
+  );
+
+  if (costRate === null) {
+    return {
+      error: "No rate card is set up for this carrier and zone. Contact Avinyaa to arrange pricing.",
+    };
+  }
+
+  const { data: rules, error: rulesError } = await supabase
+    .from("margin_rules")
+    .select("org_id, carrier_id, margin_percent");
+
+  if (rulesError) {
+    return { error: rulesError.message };
+  }
+
+  const rule = resolveMarginRule((rules ?? []) as MarginRule[], orgId, carrierId);
+
+  if (!rule) {
+    return {
+      error: "No margin rule is configured for your account. Contact Avinyaa to set this up.",
+    };
+  }
+
+  const sellRate = calculateSellRate(costRate, rule.margin_percent);
+
+  // Insert the job first, with totals already calculated
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .insert({
+      org_id: orgId,
+      carrier_id: carrierId,
+      job_type: jobType,
+      status: "booked",
+      cost_rate: costRate,
+      margin_percent: rule.margin_percent,
+      sell_rate: sellRate,
+      total_volume_m3: totalVolumeM3,
+      total_weight_kg: totalWeightKg,
+      notes: notes ? `Zone: ${zone}. ${notes}` : `Zone: ${zone}.`,
+    })
+    .select()
+    .single();
+
+  if (jobError || !job) {
+    return { error: jobError?.message ?? "Failed to create job." };
+  }
+
+  // Now bulk-insert the freight lines against that job
+  const lineRows = lines.map((line, index) => ({
+    job_id: job.id,
+    line_num: index + 1,
+    description: line.description ?? null,
+    pack_type: line.pack_type ?? null,
+    length_m: line.length_m,
+    width_m: line.width_m,
+    height_m: line.height_m,
+    volume_m3: line.length_m * line.width_m * line.height_m,
+    weight_kg: line.weight_kg,
+  }));
+
+  const { error: linesError } = await supabase.from("job_lines").insert(lineRows);
+
+  if (linesError) {
+    // Roll back the job if line insert fails, so we don't leave an orphaned job with no lines
+    await supabase.from("jobs").delete().eq("id", job.id);
+    return { error: linesError.message };
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/jobs");
+  return { success: true, jobId: job.id, sellRate, chargeableWeightKg };
+}

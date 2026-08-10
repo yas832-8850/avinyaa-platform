@@ -94,3 +94,31 @@ export function calculateChargeableWeight(
   const dimensionalWeightKg = volumeM3 * cubicFactor;
   return Math.max(actualWeightKg, dimensionalWeightKg);
 }
+export const CUBIC_FACTOR = 250; // AU standard, kg per m³
+
+export interface JobLineInput {
+  length_m: number;
+  width_m: number;
+  height_m: number;
+  weight_kg: number;
+}
+
+export function calculateLineVolume(length_m: number, width_m: number, height_m: number): number {
+  return length_m * width_m * height_m;
+}
+
+export function calculateLineTotals(lines: JobLineInput[]) {
+  let totalVolumeM3 = 0;
+  let totalWeightKg = 0;
+
+  for (const line of lines) {
+    totalVolumeM3 += calculateLineVolume(line.length_m, line.width_m, line.height_m);
+    totalWeightKg += line.weight_kg;
+  }
+
+  return { totalVolumeM3, totalWeightKg };
+}
+
+export function calculateTotalChargeableWeight(totalWeightKg: number, totalVolumeM3: number): number {
+  return Math.max(totalWeightKg, totalVolumeM3 * CUBIC_FACTOR);
+}
