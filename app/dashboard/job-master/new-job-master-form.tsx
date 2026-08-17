@@ -13,6 +13,7 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
   const [clientContact, setClientContact] = useState("");
   const [jobDate, setJobDate] = useState("");
   const [serverLink, setServerLink] = useState("");
+  const [customJobNumber, setCustomJobNumber] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +34,8 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
       accountManager,
       clientContact,
       jobDate,
-      serverLink
+      serverLink,
+      customJobNumber
     );
     setSubmitting(false);
 
@@ -48,6 +50,7 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
     setClientContact("");
     setJobDate("");
     setServerLink("");
+    setCustomJobNumber("");
     setOpen(false);
     router.refresh();
   }
@@ -101,6 +104,12 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
           placeholder="Server link (URL)"
           value={serverLink}
           onChange={(e) => setServerLink(e.target.value)}
+        />
+        <input
+          className="border rounded px-2 py-1.5 col-span-2"
+          placeholder="Custom job number (optional — leave blank to auto-generate)"
+          value={customJobNumber}
+          onChange={(e) => setCustomJobNumber(e.target.value)}
         />
       </div>
 
