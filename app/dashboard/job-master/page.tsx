@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getJobsMaster } from "./actions";
 import NewJobMasterForm from "./new-job-master-form";
 import JobsMasterTable from "./jobs-master-table";
+import SequenceSettings from "./sequence-settings";
 
 export default async function JobMasterPage() {
   const supabase = await createClient();
@@ -23,6 +24,9 @@ export default async function JobMasterPage() {
     <div className="p-6 max-w-6xl">
       <h1 className="text-xl font-semibold mb-4">Job Master List</h1>
       <NewJobMasterForm orgId={profile.org_id} />
+      <div className="mb-4">
+        <SequenceSettings orgId={profile.org_id} />
+      </div>
       <JobsMasterTable jobs={jobs} />
     </div>
   );
