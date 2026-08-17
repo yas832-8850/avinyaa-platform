@@ -98,3 +98,18 @@ export async function getJobsMaster(orgId: string) {
 
   return data ?? [];
 }
+export async function deleteJobMaster(jobId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("jobs_master")
+    .delete()
+    .eq("id", jobId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/job-master");
+  return { success: true };
+}
