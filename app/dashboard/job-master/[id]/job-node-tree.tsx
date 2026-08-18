@@ -6,6 +6,7 @@ import {
   updateJobNode,
   deleteJobNode,
   createAssignee,
+  swapNodePositions,
 } from "./actions";
 
 type JobNode = {
@@ -46,6 +47,7 @@ export default function JobNodeTree({
 }) {
   const [nodes, setNodes] = useState<JobNode[]>(initialNodes);
   const [assignees, setAssignees] = useState<Assignee[]>(initialAssignees);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
 
   function getChildren(parentId: string | null): JobNode[] {
     return nodes
@@ -93,6 +95,48 @@ export default function JobNodeTree({
     return null;
   }
 
+  function handleDragStart(nodeId: string) {
+    setDraggedId(nodeId);
+  }
+
+  function handleDragEnd() {
+    setDraggedId(null);
+  }
+
+  async function handleDrop(targetNode: JobNode) {
+    if (!draggedId || draggedId === targetNode.id) {
+      setDraggedId(null);
+      return;
+    }
+
+    const draggedNode = nodes.find((n) => n.id === draggedId);
+    if (!draggedNode) {
+      setDraggedId(null);
+      return;
+    }
+
+    // Only allow reordering within the same parent — dragging across different
+    // branches of the tree is intentionally blocked to avoid accidental re-parenting.
+    if (draggedNode.parent_id !== targetNode.parent_id) {
+      setDraggedId(null);
+      return;
+    }
+
+    const draggedPos = draggedNode.position;
+    const targetPos = targetNode.position;
+
+    setNodes((prev) =>
+      prev.map((n) => {
+        if (n.id === draggedNode.id) return { ...n, position: targetPos };
+        if (n.id === targetNode.id) return { ...n, position: draggedPos };
+        return n;
+      })
+    );
+
+    await swapNodePositions(draggedNode.id, draggedPos, targetNode.id, targetPos);
+    setDraggedId(null);
+  }
+
   return (
     <div>
       <div className="border rounded-md">
@@ -116,6 +160,10 @@ export default function JobNodeTree({
             onUpdateNode={handleUpdateNode}
             onDeleteNode={handleDeleteNode}
             onCreateAssignee={handleCreateAssignee}
+            draggedId={draggedId}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDrop={handleDrop}
           />
         ))}
       </div>
@@ -139,6 +187,10 @@ function NodeRow({
   onUpdateNode,
   onDeleteNode,
   onCreateAssignee,
+  draggedId,
+  onDragStart,
+  onDragEnd,
+  onDrop,
 }: {
   node: JobNode;
   depth: number;
@@ -149,15 +201,21 @@ function NodeRow({
   onUpdateNode: (nodeId: string, updates: Partial<JobNode>) => void;
   onDeleteNode: (nodeId: string) => void;
   onCreateAssignee: (name: string) => Promise<string | null>;
+  draggedId: string | null;
+  onDragStart: (nodeId: string) => void;
+  onDragEnd: () => void;
+  onDrop: (targetNode: JobNode) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
   const [editingName, setEditingName] = useState(false);
   const [nameValue, setNameValue] = useState(node.name);
   const [addingAssignee, setAddingAssignee] = useState(false);
   const [newAssigneeName, setNewAssigneeName] = useState("");
+  const [dragOver, setDragOver] = useState(false);
 
   const children = getChildren(node.id);
   const currentStatus = statuses.find((s) => s.id === node.status_id);
+  const isDragging = draggedId === node.id;
 
   async function handleNewAssignee() {
     if (!newAssigneeName.trim()) return;
@@ -171,8 +229,29 @@ function NodeRow({
 
   return (
     <div>
-      <div className="grid grid-cols-12 gap-2 items-center p-2 border-t text-sm">
+      <div
+        className={`grid grid-cols-12 gap-2 items-center p-2 border-t text-sm ${isDragging ? "opacity-40" : ""} ${dragOver ? "bg-blue-50" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (draggedId && draggedId !== node.id) setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          onDrop(node);
+        }}
+      >
         <div className="col-span-4 flex items-center gap-1" style={{ paddingLeft: `${depth * 20}px` }}>
+          <span
+            draggable
+            onDragStart={() => onDragStart(node.id)}
+            onDragEnd={onDragEnd}
+            className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing select-none"
+            title="Drag to reorder"
+          >
+            ⠿
+          </span>
           {children.length > 0 && (
             <button onClick={() => setExpanded(!expanded)} className="text-gray-400 w-4">
               {expanded ? "▾" : "▸"}
@@ -289,6 +368,10 @@ function NodeRow({
           onUpdateNode={onUpdateNode}
           onDeleteNode={onDeleteNode}
           onCreateAssignee={onCreateAssignee}
+          draggedId={draggedId}
+          onDragStart={onDragStart}
+          onDragEnd={onDragEnd}
+          onDrop={onDrop}
         />
       ))}
     </div>

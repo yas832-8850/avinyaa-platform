@@ -158,3 +158,28 @@ export async function createEmptyBoard(jobId: string) {
   revalidatePath("/dashboard/job-master");
   return { success: true };
 }
+
+export async function swapNodePositions(
+  nodeIdA: string,
+  positionA: number,
+  nodeIdB: string,
+  positionB: number
+) {
+  const supabase = await createClient();
+
+  const { error: errorA } = await supabase
+    .from("job_nodes")
+    .update({ position: positionB })
+    .eq("id", nodeIdA);
+
+  const { error: errorB } = await supabase
+    .from("job_nodes")
+    .update({ position: positionA })
+    .eq("id", nodeIdB);
+
+  if (errorA || errorB) {
+    return { error: errorA?.message ?? errorB?.message };
+  }
+
+  return { success: true };
+}
