@@ -109,7 +109,6 @@ export async function createJobMaster(
 
 export async function getJobsMaster(orgId: string) {
   const supabase = await createClient();
-
   const { data, error } = await supabase
     .from("jobs_master")
     .select("*")
@@ -121,7 +120,21 @@ export async function getJobsMaster(orgId: string) {
     return [];
   }
 
-  return data ?? [];
+  const jobs = data ?? [];
+  if (jobs.length === 0) return [];
+
+  const jobIds = jobs.map((j) => j.id);
+  const { data: nodeRows } = await supabase
+    .from("job_nodes")
+    .select("job_id")
+    .in("job_id", jobIds);
+
+  const jobsWithBoards = new Set((nodeRows ?? []).map((n) => n.job_id));
+
+  return jobs.map((job) => ({
+    ...job,
+    has_board: jobsWithBoards.has(job.id),
+  }));
 }
 
 export async function deleteJobMaster(jobId: string) {

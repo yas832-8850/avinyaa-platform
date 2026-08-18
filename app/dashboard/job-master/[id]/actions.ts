@@ -138,3 +138,23 @@ export async function deleteJobNode(nodeId: string, jobId: string) {
   revalidatePath(`/dashboard/job-master/${jobId}`);
   return { success: true };
 }
+
+export async function createEmptyBoard(jobId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("job_nodes")
+    .insert({
+      job_id: jobId,
+      parent_id: null,
+      name: "New item",
+      position: 0,
+    });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/dashboard/job-master");
+  return { success: true };
+}
