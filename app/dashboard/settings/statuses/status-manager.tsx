@@ -27,6 +27,8 @@ export default function StatusManager({
   const [newColor, setNewColor] = useState(PRESET_COLORS[0]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [pickingColorFor, setPickingColorFor] = useState<string | null>(null);
+  const [pendingColor, setPendingColor] = useState<string>("");
 
   async function handleAdd() {
     if (!newLabel.trim()) return;
@@ -48,9 +50,19 @@ export default function StatusManager({
     setEditingId(null);
   }
 
-  async function handleUpdateColor(id: string, color: string) {
-    setStatuses((prev) => prev.map((s) => (s.id === id ? { ...s, color } : s)));
-    await updateStatus(id, { color });
+  function openColorPicker(status: Status) {
+    setPickingColorFor(status.id);
+    setPendingColor(status.color);
+  }
+
+  async function confirmColor(id: string) {
+    setStatuses((prev) => prev.map((s) => (s.id === id ? { ...s, color: pendingColor } : s)));
+    await updateStatus(id, { color: pendingColor });
+    setPickingColorFor(null);
+  }
+
+  function cancelColorPicker() {
+    setPickingColorFor(null);
   }
 
   async function handleDelete(id: string) {
@@ -75,7 +87,7 @@ export default function StatusManager({
 
     await swapStatusPositions(current.id, current.position, target.id, target.position);
   }
-  
+
   return (
     <div className="space-y-4">
       <div className="border rounded-md p-4 space-y-3">
@@ -112,60 +124,85 @@ export default function StatusManager({
           <p className="p-4 text-sm text-gray-500 text-center">No statuses yet — add one above.</p>
         )}
         {statuses.map((status, index) => (
-          <div key={status.id} className="flex items-center gap-3 p-3">
-            <div className="flex flex-col">
-              <button
-                onClick={() => handleMove(index, "up")}
-                disabled={index === 0}
-                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
-              >
-                ▲
-              </button>
-              <button
-                onClick={() => handleMove(index, "down")}
-                disabled={index === statuses.length - 1}
-                className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
-              >
-                ▼
-              </button>
-            </div>
-
-            <div className="flex gap-1">
-              {PRESET_COLORS.map((c) => (
+          <div key={status.id} className="p-3">
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col">
                 <button
-                  key={c}
-                  onClick={() => handleUpdateColor(status.id, c)}
-                  className="w-5 h-5 rounded-full border-2"
-                  style={{ backgroundColor: c, borderColor: status.color === c ? "#000" : "transparent" }}
+                  onClick={() => handleMove(index, "up")}
+                  disabled={index === 0}
+                  className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => handleMove(index, "down")}
+                  disabled={index === statuses.length - 1}
+                  className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
+                >
+                  ▼
+                </button>
+              </div>
+
+              <button
+                onClick={() => openColorPicker(status)}
+                className="w-5 h-5 rounded-full border flex-shrink-0"
+                style={{ backgroundColor: status.color }}
+                title="Change color"
+              />
+
+              {editingId === status.id ? (
+                <input
+                  autoFocus
+                  className="flex-1 border rounded px-2 py-1 text-sm"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onBlur={() => handleUpdateLabel(status.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
                 />
-              ))}
+              ) : (
+                <span
+                  onClick={() => { setEditingId(status.id); setEditValue(status.label); }}
+                  className="flex-1 text-sm px-2 py-1 rounded cursor-pointer hover:bg-gray-50"
+                  style={{ backgroundColor: `${status.color}22` }}
+                >
+                  {status.label}
+                </span>
+              )}
+
+              <button
+                onClick={() => handleDelete(status.id)}
+                className="text-red-500 hover:text-red-700 text-sm"
+              >
+                ✕
+              </button>
             </div>
 
-            {editingId === status.id ? (
-              <input
-                autoFocus
-                className="flex-1 border rounded px-2 py-1 text-sm"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onBlur={() => handleUpdateLabel(status.id)}
-                onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-              />
-            ) : (
-              <span
-                onClick={() => { setEditingId(status.id); setEditValue(status.label); }}
-                className="flex-1 text-sm px-2 py-1 rounded cursor-pointer hover:bg-gray-50"
-                style={{ backgroundColor: `${status.color}22` }}
-              >
-                {status.label}
-              </span>
+            {pickingColorFor === status.id && (
+              <div className="flex items-center gap-2 mt-2 ml-8 p-2 bg-gray-50 rounded border">
+                <div className="flex gap-1">
+                  {PRESET_COLORS.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setPendingColor(c)}
+                      className="w-6 h-6 rounded-full border-2"
+                      style={{ backgroundColor: c, borderColor: pendingColor === c ? "#000" : "transparent" }}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => confirmColor(status.id)}
+                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={cancelColorPicker}
+                  className="text-xs text-gray-500 hover:underline"
+                >
+                  Cancel
+                </button>
+              </div>
             )}
-
-            <button
-              onClick={() => handleDelete(status.id)}
-              className="text-red-500 hover:text-red-700 text-sm"
-            >
-              ✕
-            </button>
           </div>
         ))}
       </div>
