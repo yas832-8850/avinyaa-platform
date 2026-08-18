@@ -60,7 +60,7 @@ export default function JobsMasterTable({ jobs }: { jobs: JobMaster[] }) {
           )}
           {jobs.map((job) => (
             <tr key={job.id} className="border-t">
-              <td className="p-2 font-medium">{job.job_number}</td>
+                            <td className="p-2 font-medium"><a href={`/dashboard/job-master/${job.id}`} className="text-blue-600 hover:underline">{job.job_number}</a></td>
               <td className="p-2">{job.client}</td>
               <td className="p-2">{job.project_name}</td>
               <td className="p-2">{job.account_manager}</td>
