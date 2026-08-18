@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SignOutButton from "./signout-button";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -16,7 +17,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Link href="/dashboard/job-master" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">Job Master List</Link>
         <Link href="/dashboard/reports/nodes" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">All Tasks Report</Link>
         <Link href="/dashboard/settings/statuses" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">Status Settings</Link>
-      </nav>
+              <div className="mt-6 pt-4 border-t">
+          <SignOutButton />
+        </div></nav>
       <main className="flex-1">{children}</main>
     </div>
   );
