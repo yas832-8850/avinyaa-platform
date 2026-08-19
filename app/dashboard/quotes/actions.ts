@@ -83,7 +83,7 @@ export async function createQuote(orgId: string, quoteName: string, jobId: strin
   ];
   await supabase.from("quote_tiers").insert(defaultTiers);
 
-  await supabase.from("quote_freight").insert({ quote_id: data.id, amount: 0, included: true });
+  await supabase.from("quote_freight").insert({ quote_id: data.id, amount: 0, included: true, margin_percent: 0 });
 
   revalidatePath("/dashboard/quotes");
   return { success: true, quote: data };
@@ -220,7 +220,8 @@ export async function updateQuoteFreight(
   quoteId: string,
   amount: number,
   notes: string,
-  included: boolean
+  included: boolean,
+  marginPercent: number
 ) {
   const supabase = await createClient();
 
@@ -233,13 +234,13 @@ export async function updateQuoteFreight(
   if (existing) {
     const { error } = await supabase
       .from("quote_freight")
-      .update({ amount, notes, included })
+      .update({ amount, notes, included, margin_percent: marginPercent })
       .eq("quote_id", quoteId);
     if (error) return { error: error.message };
   } else {
     const { error } = await supabase
       .from("quote_freight")
-      .insert({ quote_id: quoteId, amount, notes, included });
+      .insert({ quote_id: quoteId, amount, notes, included, margin_percent: marginPercent });
     if (error) return { error: error.message };
   }
 

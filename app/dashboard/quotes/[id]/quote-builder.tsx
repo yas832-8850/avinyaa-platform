@@ -44,6 +44,7 @@ type Freight = {
   amount: number;
   notes: string | null;
   included: boolean | null;
+  margin_percent: number | null;
 } | null;
 
 type JobOption = {
@@ -92,7 +93,8 @@ export default function QuoteBuilder({
   const [rounding, setRounding] = useState(initialQuote.rounding ?? "none");
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [lines, setLines] = useState<Line[]>(initialLines);
-  const [freightAmount, setFreightAmount] = useState(initialFreight?.amount ?? 0);
+  const [freightCost, setFreightCost] = useState(initialFreight?.amount ?? 0);
+  const [freightMargin, setFreightMargin] = useState(initialFreight?.margin_percent ?? 0);
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
   const [freightIncluded, setFreightIncluded] = useState(initialFreight?.included ?? true);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
@@ -165,12 +167,12 @@ export default function QuoteBuilder({
   }
 
   async function handleFreightBlur() {
-    await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes, freightIncluded);
+    await updateQuoteFreight(initialQuote.id, freightCost, freightNotes, freightIncluded, freightMargin);
   }
 
   async function handleFreightIncludedChange(checked: boolean) {
     setFreightIncluded(checked);
-    await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes, checked);
+    await updateQuoteFreight(initialQuote.id, freightCost, freightNotes, checked, freightMargin);
   }
 
   async function handleDeleteQuote() {
@@ -193,7 +195,8 @@ export default function QuoteBuilder({
   });
 
   const linesSum = lineTotals.reduce((sum, t) => sum + t, 0);
-  const effectiveFreight = freightIncluded ? (freightAmount || 0) : 0;
+  const freightSellPrice = calculateSellFromMargin(freightCost, freightMargin);
+  const effectiveFreight = freightIncluded ? freightSellPrice : 0;
   const subtotal = linesSum + effectiveFreight;
   const gstAmount = pricingMode === "inc_gst" ? subtotal - subtotal / (1 + GST_RATE) : subtotal * GST_RATE;
   const grandTotalExGst = pricingMode === "inc_gst" ? subtotal - gstAmount : subtotal;
@@ -207,7 +210,9 @@ export default function QuoteBuilder({
       return `${line.description || "(no description)"} — Qty ${line.order_qty} @ $${sellPrice?.toFixed(2) ?? "—"} = $${total.toFixed(2)}`;
     }).join("\n");
 
-    const freightLine = freightIncluded ? `Freight: $${(freightAmount || 0).toFixed(2)}` : "Freight: not included";
+    const freightLine = freightIncluded
+      ? `Freight: $${freightSellPrice.toFixed(2)} (cost $${freightCost.toFixed(2)}, ${freightMargin}% margin)`
+      : "Freight: not included";
 
     return [
       `Quote: ${quoteName}`,
@@ -454,19 +459,36 @@ export default function QuoteBuilder({
         {freightIncluded ? (
           <>
             <p className="text-xs text-gray-500 mb-2">One freight line for the entire quote — not divided across line items.</p>
-            <div className="flex gap-3 items-end">
+            <div className="grid grid-cols-4 gap-3 items-end">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Amount ($)</label>
+                <label className="block text-xs text-gray-500 mb-1">Freight Cost ($)</label>
                 <input
                   type="number"
-                  className="border rounded px-2 py-1.5 text-sm w-32"
-                  value={freightAmount}
+                  className="w-full border rounded px-2 py-1.5 text-sm"
+                  value={freightCost}
                   onFocus={selectAllOnFocus}
-                  onChange={(e) => setFreightAmount(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => setFreightCost(parseFloat(e.target.value) || 0)}
                   onBlur={handleFreightBlur}
                 />
               </div>
-              <div className="flex-1">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Margin (%)</label>
+                <input
+                  type="number"
+                  className="w-full border rounded px-2 py-1.5 text-sm"
+                  value={freightMargin}
+                  onFocus={selectAllOnFocus}
+                  onChange={(e) => setFreightMargin(parseFloat(e.target.value) || 0)}
+                  onBlur={handleFreightBlur}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Freight Sell</label>
+                <div className="px-2 py-1.5 text-sm font-medium border rounded bg-gray-50">
+                  ${freightSellPrice.toFixed(2)}
+                </div>
+              </div>
+              <div>
                 <label className="block text-xs text-gray-500 mb-1">Notes</label>
                 <input
                   className="w-full border rounded px-2 py-1.5 text-sm"
@@ -489,7 +511,7 @@ export default function QuoteBuilder({
         </div>
         {freightIncluded && (
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Freight</span>
+            <span className="text-gray-600">Freight (sell)</span>
             <span>${effectiveFreight.toFixed(2)}</span>
           </div>
         )}
