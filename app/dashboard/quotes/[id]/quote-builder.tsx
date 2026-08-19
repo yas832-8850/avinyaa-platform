@@ -43,6 +43,7 @@ type Line = {
 type Freight = {
   amount: number;
   notes: string | null;
+  included: boolean | null;
 } | null;
 
 type JobOption = {
@@ -66,7 +67,7 @@ function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
 function applyRounding(amount: number, rounding: string): number {
   if (rounding === "nearest_dollar") return Math.round(amount);
   if (rounding === "nearest_10") return Math.round(amount / 10) * 10;
-  return Math.round(amount * 100) / 100; // "none" — still round to cents, avoid floating point mess
+  return Math.round(amount * 100) / 100;
 }
 
 export default function QuoteBuilder({
@@ -93,6 +94,7 @@ export default function QuoteBuilder({
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [freightAmount, setFreightAmount] = useState(initialFreight?.amount ?? 0);
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
+  const [freightIncluded, setFreightIncluded] = useState(initialFreight?.included ?? true);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [savingName, setSavingName] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -163,7 +165,12 @@ export default function QuoteBuilder({
   }
 
   async function handleFreightBlur() {
-    await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes);
+    await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes, freightIncluded);
+  }
+
+  async function handleFreightIncludedChange(checked: boolean) {
+    setFreightIncluded(checked);
+    await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes, checked);
   }
 
   async function handleDeleteQuote() {
@@ -186,7 +193,8 @@ export default function QuoteBuilder({
   });
 
   const linesSum = lineTotals.reduce((sum, t) => sum + t, 0);
-  const subtotal = linesSum + (freightAmount || 0);
+  const effectiveFreight = freightIncluded ? (freightAmount || 0) : 0;
+  const subtotal = linesSum + effectiveFreight;
   const gstAmount = pricingMode === "inc_gst" ? subtotal - subtotal / (1 + GST_RATE) : subtotal * GST_RATE;
   const grandTotalExGst = pricingMode === "inc_gst" ? subtotal - gstAmount : subtotal;
   const grandTotalIncGst = pricingMode === "inc_gst" ? subtotal : subtotal + gstAmount;
@@ -199,12 +207,14 @@ export default function QuoteBuilder({
       return `${line.description || "(no description)"} — Qty ${line.order_qty} @ $${sellPrice?.toFixed(2) ?? "—"} = $${total.toFixed(2)}`;
     }).join("\n");
 
+    const freightLine = freightIncluded ? `Freight: $${(freightAmount || 0).toFixed(2)}` : "Freight: not included";
+
     return [
       `Quote: ${quoteName}`,
       "",
       lines_text || "(no line items)",
       "",
-      `Freight: $${(freightAmount || 0).toFixed(2)}`,
+      freightLine,
       `Subtotal (Ex GST): $${grandTotalExGst.toFixed(2)}`,
       `GST: $${gstAmount.toFixed(2)}`,
       `Total (Inc GST): $${grandTotalIncGst.toFixed(2)}`,
@@ -430,30 +440,46 @@ export default function QuoteBuilder({
       </div>
 
       <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">Freight (whole job)</h3>
-        <p className="text-xs text-gray-500 mb-2">One freight line for the entire quote — not divided across line items.</p>
-        <div className="flex gap-3 items-end">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Amount ($)</label>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-medium text-sm">Freight (whole job)</h3>
+          <label className="flex items-center gap-2 text-sm">
             <input
-              type="number"
-              className="border rounded px-2 py-1.5 text-sm w-32"
-              value={freightAmount}
-              onFocus={selectAllOnFocus}
-              onChange={(e) => setFreightAmount(parseFloat(e.target.value) || 0)}
-              onBlur={handleFreightBlur}
+              type="checkbox"
+              checked={freightIncluded}
+              onChange={(e) => handleFreightIncludedChange(e.target.checked)}
             />
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs text-gray-500 mb-1">Notes</label>
-            <input
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={freightNotes}
-              onChange={(e) => setFreightNotes(e.target.value)}
-              onBlur={handleFreightBlur}
-            />
-          </div>
+            Include freight in this quote
+          </label>
         </div>
+        {freightIncluded ? (
+          <>
+            <p className="text-xs text-gray-500 mb-2">One freight line for the entire quote — not divided across line items.</p>
+            <div className="flex gap-3 items-end">
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Amount ($)</label>
+                <input
+                  type="number"
+                  className="border rounded px-2 py-1.5 text-sm w-32"
+                  value={freightAmount}
+                  onFocus={selectAllOnFocus}
+                  onChange={(e) => setFreightAmount(parseFloat(e.target.value) || 0)}
+                  onBlur={handleFreightBlur}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-xs text-gray-500 mb-1">Notes</label>
+                <input
+                  className="w-full border rounded px-2 py-1.5 text-sm"
+                  value={freightNotes}
+                  onChange={(e) => setFreightNotes(e.target.value)}
+                  onBlur={handleFreightBlur}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-gray-400">Freight not included in this quote.</p>
+        )}
       </div>
 
       <div className="border rounded-md p-4 bg-gray-50">
@@ -461,10 +487,12 @@ export default function QuoteBuilder({
           <span className="text-gray-600">Line items total</span>
           <span>${linesSum.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">Freight</span>
-          <span>${(freightAmount || 0).toFixed(2)}</span>
-        </div>
+        {freightIncluded && (
+          <div className="flex justify-between text-sm mb-1">
+            <span className="text-gray-600">Freight</span>
+            <span>${effectiveFreight.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm mb-1">
           <span className="text-gray-600">Subtotal (Ex GST)</span>
           <span>${grandTotalExGst.toFixed(2)}</span>

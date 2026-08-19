@@ -83,7 +83,7 @@ export async function createQuote(orgId: string, quoteName: string, jobId: strin
   ];
   await supabase.from("quote_tiers").insert(defaultTiers);
 
-  await supabase.from("quote_freight").insert({ quote_id: data.id, amount: 0 });
+  await supabase.from("quote_freight").insert({ quote_id: data.id, amount: 0, included: true });
 
   revalidatePath("/dashboard/quotes");
   return { success: true, quote: data };
@@ -216,7 +216,12 @@ export async function deleteQuoteTier(tierId: string) {
   return { success: true };
 }
 
-export async function updateQuoteFreight(quoteId: string, amount: number, notes: string) {
+export async function updateQuoteFreight(
+  quoteId: string,
+  amount: number,
+  notes: string,
+  included: boolean
+) {
   const supabase = await createClient();
 
   const { data: existing } = await supabase
@@ -228,13 +233,13 @@ export async function updateQuoteFreight(quoteId: string, amount: number, notes:
   if (existing) {
     const { error } = await supabase
       .from("quote_freight")
-      .update({ amount, notes })
+      .update({ amount, notes, included })
       .eq("quote_id", quoteId);
     if (error) return { error: error.message };
   } else {
     const { error } = await supabase
       .from("quote_freight")
-      .insert({ quote_id: quoteId, amount, notes });
+      .insert({ quote_id: quoteId, amount, notes, included });
     if (error) return { error: error.message };
   }
 
