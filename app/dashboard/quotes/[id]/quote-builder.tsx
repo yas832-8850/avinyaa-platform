@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   updateQuote,
   createQuoteLine,
@@ -11,6 +12,7 @@ import {
   deleteQuoteTier,
   updateQuoteFreight,
   getNodesForJob,
+    deleteQuote,
 } from "../actions";
 import { calculateSellFromMargin, calculateLineTotal } from "../quote-margin";
 
@@ -72,7 +74,8 @@ export default function QuoteBuilder({
   initialFreight: Freight;
   jobOptions: JobOption[];
 }) {
-  const [quoteName, setQuoteName] = useState(initialQuote.quote_name);
+    const router = useRouter();
+    const [quoteName, setQuoteName] = useState(initialQuote.quote_name);
   const [jobId, setJobId] = useState(initialQuote.job_id ?? "");
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [lines, setLines] = useState<Line[]>(initialLines);
@@ -139,6 +142,12 @@ export default function QuoteBuilder({
   async function handleFreightBlur() {
     await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes);
   }
+      async function handleDeleteQuote() {
+    const confirmed = window.confirm(`Delete quote "${quoteName}"? This can't be undone.`);
+    if (!confirmed) return;
+    await deleteQuote(initialQuote.id);
+    router.push("/dashboard/quotes");
+  }
 
   function getTierSellPrice(unitCost: number, tierId: string | null): number | null {
     if (!tierId) return null;
@@ -182,6 +191,14 @@ export default function QuoteBuilder({
               ))}
             </select>
           </div>
+                  <div className="mt-3 pt-3 border-t flex justify-end">
+          <button
+            onClick={handleDeleteQuote}
+            className="text-sm text-red-500 hover:text-red-700"
+          >
+            Delete Quote
+          </button>
+        </div>
         </div>
       </div>
 
