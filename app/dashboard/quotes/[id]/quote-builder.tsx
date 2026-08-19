@@ -53,7 +53,8 @@ type NodeOption = {
 };
 
 function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
-  e.target.select();
+  const target = e.target;
+  setTimeout(() => target.select(), 0);
 }
 
 export default function QuoteBuilder({
