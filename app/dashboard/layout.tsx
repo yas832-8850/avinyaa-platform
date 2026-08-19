@@ -18,6 +18,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <Link href="/dashboard/reports/nodes" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">All Tasks Report</Link>
         <Link href="/dashboard/settings/statuses" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">Status Settings</Link>
                 <Link href="/dashboard/quotes" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">Quotes</Link>
+                        <Link href="/dashboard/settings/organisation" className="block text-sm py-1.5 px-2 rounded hover:bg-gray-200">Organisation Settings</Link>
               <div className="mt-6 pt-4 border-t">
           <SignOutButton />
         </div></nav>
