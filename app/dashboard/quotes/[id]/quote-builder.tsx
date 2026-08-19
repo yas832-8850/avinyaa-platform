@@ -93,13 +93,17 @@ export default function QuoteBuilder({
   const [rounding, setRounding] = useState(initialQuote.rounding ?? "none");
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [lines, setLines] = useState<Line[]>(initialLines);
-  const [freightCost, setFreightCost] = useState(initialFreight?.amount ?? 0);
-  const [freightMargin, setFreightMargin] = useState(initialFreight?.margin_percent ?? 0);
+
+  const [freightCostInput, setFreightCostInput] = useState(String(initialFreight?.amount ?? 0));
+  const [freightMarginInput, setFreightMarginInput] = useState(String(initialFreight?.margin_percent ?? 0));
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
   const [freightIncluded, setFreightIncluded] = useState(initialFreight?.included ?? true);
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [savingName, setSavingName] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
+
+  const freightCost = parseFloat(freightCostInput) || 0;
+  const freightMargin = parseFloat(freightMarginInput) || 0;
 
   useEffect(() => {
     if (jobId) {
@@ -463,23 +467,37 @@ export default function QuoteBuilder({
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Freight Cost ($)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   className="w-full border rounded px-2 py-1.5 text-sm"
-                  value={freightCost}
-                  onFocus={selectAllOnFocus}
-                  onChange={(e) => setFreightCost(parseFloat(e.target.value) || 0)}
-                  onBlur={handleFreightBlur}
+                  value={freightCostInput}
+                  onFocus={(e) => setTimeout(() => e.target.select(), 0)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightCostInput(v);
+                  }}
+                  onBlur={() => {
+                    if (freightCostInput === "") setFreightCostInput("0");
+                    handleFreightBlur();
+                  }}
                 />
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">Margin (%)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   className="w-full border rounded px-2 py-1.5 text-sm"
-                  value={freightMargin}
-                  onFocus={selectAllOnFocus}
-                  onChange={(e) => setFreightMargin(parseFloat(e.target.value) || 0)}
-                  onBlur={handleFreightBlur}
+                  value={freightMarginInput}
+                  onFocus={(e) => setTimeout(() => e.target.select(), 0)}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightMarginInput(v);
+                  }}
+                  onBlur={() => {
+                    if (freightMarginInput === "") setFreightMarginInput("0");
+                    handleFreightBlur();
+                  }}
                 />
               </div>
               <div>
