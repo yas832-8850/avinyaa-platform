@@ -143,8 +143,8 @@ export async function createQuoteLine(quoteId: string, position: number) {
 export async function updateQuoteLine(
   lineId: string,
   updates: {
-    description?: string;
-    code?: string;
+    description?: string | null;
+    code?: string | null;
     unit_cost?: number;
     order_qty?: number;
     tier_used_id?: string | null;
