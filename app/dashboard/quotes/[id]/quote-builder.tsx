@@ -52,6 +52,10 @@ type NodeOption = {
   name: string;
 };
 
+function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
+  e.target.select();
+}
+
 export default function QuoteBuilder({
   orgId,
   initialQuote,
@@ -190,6 +194,7 @@ export default function QuoteBuilder({
                 type="number"
                 className="w-14 border rounded px-1 py-0.5 text-sm"
                 value={tier.margin_percent}
+                onFocus={selectAllOnFocus}
                 onChange={(e) => handleTierChange(tier.id, parseFloat(e.target.value) || 0)}
               />
               <span className="text-xs text-gray-500">%</span>
@@ -251,6 +256,7 @@ export default function QuoteBuilder({
                       type="number"
                       className="w-full border rounded px-2 py-1"
                       value={line.unit_cost}
+                      onFocus={selectAllOnFocus}
                       onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, unit_cost: parseFloat(e.target.value) || 0 } : l)))}
                       onBlur={(e) => handleUpdateLine(line.id, { unit_cost: parseFloat(e.target.value) || 0 })}
                     />
@@ -261,6 +267,7 @@ export default function QuoteBuilder({
                       type="number"
                       className="w-full border rounded px-2 py-1"
                       value={line.order_qty}
+                      onFocus={selectAllOnFocus}
                       onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, order_qty: parseFloat(e.target.value) || 0 } : l)))}
                       onBlur={(e) => handleUpdateLine(line.id, { order_qty: parseFloat(e.target.value) || 0 })}
                     />
@@ -327,6 +334,7 @@ export default function QuoteBuilder({
               type="number"
               className="border rounded px-2 py-1.5 text-sm w-32"
               value={freightAmount}
+              onFocus={selectAllOnFocus}
               onChange={(e) => setFreightAmount(parseFloat(e.target.value) || 0)}
               onBlur={handleFreightBlur}
             />
