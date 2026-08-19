@@ -12,7 +12,7 @@ import {
   deleteQuoteTier,
   updateQuoteFreight,
   getNodesForJob,
-    deleteQuote,
+  deleteQuote,
 } from "../actions";
 import { calculateSellFromMargin, calculateLineTotal } from "../quote-margin";
 
@@ -20,6 +20,8 @@ type Quote = {
   id: string;
   quote_name: string;
   job_id: string | null;
+  pricing_mode: string | null;
+  rounding: string | null;
 };
 
 type Tier = {
@@ -54,9 +56,17 @@ type NodeOption = {
   name: string;
 };
 
+const GST_RATE = 0.10;
+
 function selectAllOnFocus(e: React.FocusEvent<HTMLInputElement>) {
   const target = e.target;
   setTimeout(() => target.select(), 0);
+}
+
+function applyRounding(amount: number, rounding: string): number {
+  if (rounding === "nearest_dollar") return Math.round(amount);
+  if (rounding === "nearest_10") return Math.round(amount / 10) * 10;
+  return Math.round(amount * 100) / 100; // "none" — still round to cents, avoid floating point mess
 }
 
 export default function QuoteBuilder({
@@ -74,15 +84,18 @@ export default function QuoteBuilder({
   initialFreight: Freight;
   jobOptions: JobOption[];
 }) {
-    const router = useRouter();
-    const [quoteName, setQuoteName] = useState(initialQuote.quote_name);
+  const router = useRouter();
+  const [quoteName, setQuoteName] = useState(initialQuote.quote_name);
   const [jobId, setJobId] = useState(initialQuote.job_id ?? "");
+  const [pricingMode, setPricingMode] = useState(initialQuote.pricing_mode ?? "ex_gst");
+  const [rounding, setRounding] = useState(initialQuote.rounding ?? "none");
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [freightAmount, setFreightAmount] = useState(initialFreight?.amount ?? 0);
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [savingName, setSavingName] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState(false);
 
   useEffect(() => {
     if (jobId) {
@@ -102,6 +115,16 @@ export default function QuoteBuilder({
   async function handleJobChange(newJobId: string) {
     setJobId(newJobId);
     await updateQuote(initialQuote.id, { job_id: newJobId || null });
+  }
+
+  async function handlePricingModeChange(mode: string) {
+    setPricingMode(mode);
+    await updateQuote(initialQuote.id, { pricing_mode: mode });
+  }
+
+  async function handleRoundingChange(newRounding: string) {
+    setRounding(newRounding);
+    await updateQuote(initialQuote.id, { rounding: newRounding });
   }
 
   async function handleTierChange(tierId: string, newMargin: number) {
@@ -142,7 +165,8 @@ export default function QuoteBuilder({
   async function handleFreightBlur() {
     await updateQuoteFreight(initialQuote.id, freightAmount, freightNotes);
   }
-      async function handleDeleteQuote() {
+
+  async function handleDeleteQuote() {
     const confirmed = window.confirm(`Delete quote "${quoteName}"? This can't be undone.`);
     if (!confirmed) return;
     await deleteQuote(initialQuote.id);
@@ -162,10 +186,49 @@ export default function QuoteBuilder({
   });
 
   const linesSum = lineTotals.reduce((sum, t) => sum + t, 0);
-  const grandTotal = linesSum + (freightAmount || 0);
+  const subtotal = linesSum + (freightAmount || 0);
+  const gstAmount = pricingMode === "inc_gst" ? subtotal - subtotal / (1 + GST_RATE) : subtotal * GST_RATE;
+  const grandTotalExGst = pricingMode === "inc_gst" ? subtotal - gstAmount : subtotal;
+  const grandTotalIncGst = pricingMode === "inc_gst" ? subtotal : subtotal + gstAmount;
+  const displayTotal = applyRounding(pricingMode === "inc_gst" ? grandTotalIncGst : grandTotalExGst, rounding);
+
+  function buildSummaryText(): string {
+    const lines_text = lines.map((line) => {
+      const sellPrice = getTierSellPrice(line.unit_cost, line.tier_used_id);
+      const total = sellPrice !== null ? calculateLineTotal(sellPrice, line.order_qty) : 0;
+      return `${line.description || "(no description)"} — Qty ${line.order_qty} @ $${sellPrice?.toFixed(2) ?? "—"} = $${total.toFixed(2)}`;
+    }).join("\n");
+
+    return [
+      `Quote: ${quoteName}`,
+      "",
+      lines_text || "(no line items)",
+      "",
+      `Freight: $${(freightAmount || 0).toFixed(2)}`,
+      `Subtotal (Ex GST): $${grandTotalExGst.toFixed(2)}`,
+      `GST: $${gstAmount.toFixed(2)}`,
+      `Total (Inc GST): $${grandTotalIncGst.toFixed(2)}`,
+    ].join("\n");
+  }
+
+  async function handleCopySummary() {
+    const text = buildSummaryText();
+    await navigator.clipboard.writeText(text);
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2000);
+  }
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <button
+          onClick={handleCopySummary}
+          className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50"
+        >
+          {copyFeedback ? "Copied!" : "Copy summary"}
+        </button>
+      </div>
+
       <div className="border rounded-md p-4">
         <div className="grid grid-cols-2 gap-4">
           <div>
@@ -191,14 +254,38 @@ export default function QuoteBuilder({
               ))}
             </select>
           </div>
-                  <div className="mt-3 pt-3 border-t flex justify-end">
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Pricing</label>
+            <select
+              className="w-full border rounded px-2 py-1.5 text-sm"
+              value={pricingMode}
+              onChange={(e) => handlePricingModeChange(e.target.value)}
+            >
+              <option value="ex_gst">Ex. GST</option>
+              <option value="inc_gst">Inc. GST</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Rounding</label>
+            <select
+              className="w-full border rounded px-2 py-1.5 text-sm"
+              value={rounding}
+              onChange={(e) => handleRoundingChange(e.target.value)}
+            >
+              <option value="none">No rounding</option>
+              <option value="nearest_dollar">Nearest dollar</option>
+              <option value="nearest_10">Nearest $10</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-3 pt-3 border-t flex justify-end">
           <button
             onClick={handleDeleteQuote}
             className="text-sm text-red-500 hover:text-red-700"
           >
             Delete Quote
           </button>
-        </div>
         </div>
       </div>
 
@@ -378,9 +465,17 @@ export default function QuoteBuilder({
           <span className="text-gray-600">Freight</span>
           <span>${(freightAmount || 0).toFixed(2)}</span>
         </div>
+        <div className="flex justify-between text-sm mb-1">
+          <span className="text-gray-600">Subtotal (Ex GST)</span>
+          <span>${grandTotalExGst.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-sm mb-1">
+          <span className="text-gray-600">GST (10%)</span>
+          <span>${gstAmount.toFixed(2)}</span>
+        </div>
         <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
-          <span>Grand Total</span>
-          <span>${grandTotal.toFixed(2)}</span>
+          <span>Grand Total ({pricingMode === "inc_gst" ? "Inc GST" : "Ex GST"}, {rounding === "none" ? "unrounded" : "rounded"})</span>
+          <span>${displayTotal.toFixed(2)}</span>
         </div>
       </div>
     </div>
