@@ -245,7 +245,15 @@ export default function QuoteBuilder({
           className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50"
         >
           {copyFeedback ? "Copied!" : "Copy summary"}
-        </button>
+        </button>      
+        
+         <a href={`/api/quote-pdf/${initialQuote.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50"
+        >
+          Download Internal PDF
+        </a>
       </div>
 
       <div className="border rounded-md p-4">
