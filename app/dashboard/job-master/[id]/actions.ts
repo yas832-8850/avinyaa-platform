@@ -183,3 +183,16 @@ export async function swapNodePositions(
 
   return { success: true };
 }
+
+export async function deleteAssignee(assigneeId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("assignees")
+    .delete()
+    .eq("id", assigneeId);
+
+  if (error) return { error: error.message };
+
+  return { success: true };
+}
