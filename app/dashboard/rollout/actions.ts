@@ -107,6 +107,32 @@ export async function assignInstaller(stopId: string, installerId: string | null
   return { success: true };
 }
 
+export async function deleteRolloutUpload(uploadId: string) {
+  const supabase = await createClient();
+
+  const { error: stopsError } = await supabase
+    .from("rollout_stops")
+    .delete()
+    .eq("rollout_upload_id", uploadId);
+
+  if (stopsError) {
+    console.error("Failed to delete rollout stops:", stopsError.message);
+    return { success: false, error: stopsError.message };
+  }
+
+  const { error: uploadError } = await supabase
+    .from("rollout_uploads")
+    .delete()
+    .eq("id", uploadId);
+
+  if (uploadError) {
+    console.error("Failed to delete rollout upload:", uploadError.message);
+    return { success: false, error: uploadError.message };
+  }
+
+  revalidatePath("/dashboard/rollout");
+  return { success: true };
+}
 export async function getInstallersForDropdown(orgId: string) {
   const supabase = await createClient();
 

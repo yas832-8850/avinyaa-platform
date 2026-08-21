@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
-import { createRolloutUpload } from "./actions";
+import { createRolloutUpload, deleteRolloutUpload } from "./actions";
 
 type ParsedStop = {
   site_name: string;
@@ -118,6 +118,13 @@ export default function RolloutUploadForm({
     setSaving(false);
   }
 
+  async function handleDeleteUpload(uploadId: string) {
+    const confirmed = window.confirm("Delete this rollout upload and all its stops? This can't be undone.");
+    if (!confirmed) return;
+    setUploads((prev) => prev.filter((u) => u.id !== uploadId));
+    await deleteRolloutUpload(uploadId);
+  }
+
   return (
     <div className="space-y-6">
       <div className="border rounded-md p-4">
@@ -125,12 +132,7 @@ export default function RolloutUploadForm({
         <p className="text-xs text-gray-500 mb-3">
           CSV or Excel file with columns: Site Name, Address, Suburb, State, Postcode (Notes optional).
         </p>
-        <input
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          onChange={handleFileChange}
-          className="text-sm"
-        />
+        <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="text-sm" />
 
         {parseError && (
           <p className="text-sm text-red-600 mt-2">{parseError}</p>
@@ -165,11 +167,7 @@ export default function RolloutUploadForm({
                 </tbody>
               </table>
             </div>
-            <button
-              onClick={handleConfirmUpload}
-              disabled={saving}
-              className="mt-3 text-sm border rounded px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
-            >
+            <button onClick={handleConfirmUpload} disabled={saving} className="mt-3 text-sm border rounded px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50">
               {saving ? "Saving..." : `Confirm & Save ${parsedStops.length} Stops`}
             </button>
           </div>
@@ -183,13 +181,10 @@ export default function RolloutUploadForm({
         )}
         <div className="space-y-1">
           {uploads.map((upload) => (
-            
-             <a key={upload.id}
-              href={`/dashboard/rollout/${upload.id}`}
-              className="block border rounded px-3 py-2 text-sm hover:bg-gray-50"
-            >
-              {upload.file_name || "Untitled upload"} — {new Date(upload.created_at).toLocaleDateString()}
-            </a>
+            <div key={upload.id} className="flex items-center justify-between border rounded px-3 py-2 text-sm hover:bg-gray-50">
+              <a href={`/dashboard/rollout/${upload.id}`} className="flex-1">{upload.file_name || "Untitled upload"} — {new Date(upload.created_at).toLocaleDateString()}</a>
+              <button onClick={() => handleDeleteUpload(upload.id)} className="text-red-400 hover:text-red-600 text-xs ml-3">Delete</button>
+            </div>
           ))}
         </div>
       </div>
