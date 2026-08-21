@@ -22,6 +22,8 @@ type Quote = {
   job_id: string | null;
   pricing_mode: string | null;
   rounding: string | null;
+    bill_to_name: string | null;
+      bill_to_address: string | null;
 };
 
 type Tier = {
@@ -98,6 +100,8 @@ export default function QuoteBuilder({
   const [freightMarginInput, setFreightMarginInput] = useState(String(initialFreight?.margin_percent ?? 0));
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
   const [freightIncluded, setFreightIncluded] = useState(initialFreight?.included ?? true);
+    const [billToName, setBillToName] = useState(initialQuote.bill_to_name ?? "");
+      const [billToAddress, setBillToAddress] = useState(initialQuote.bill_to_address ?? "");
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [savingName, setSavingName] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -121,8 +125,20 @@ export default function QuoteBuilder({
   }
 
   async function handleJobChange(newJobId: string) {
+    async function handleJobChange(newJobId: string) {
     setJobId(newJobId);
     await updateQuote(initialQuote.id, { job_id: newJobId || null });
+  }
+    
+    setJobId(newJobId);
+    await updateQuote(initialQuote.id, { job_id: newJobId || null });
+  }
+
+    async function handleBillToBlur() {
+    await updateQuote(initialQuote.id, {
+      bill_to_name: billToName.trim() || null,
+      bill_to_address: billToAddress.trim() || null,
+    });
   }
 
   async function handlePricingModeChange(mode: string) {
@@ -307,6 +323,7 @@ export default function QuoteBuilder({
           </div>
         </div>
 
+        <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4"><div><label className="block text-xs text-gray-500 mb-1">Bill To (Name)</label><input className="w-full border rounded px-2 py-1.5 text-sm" placeholder="Client / company name" value={billToName} onChange={(e) => setBillToName(e.target.value)} onBlur={handleBillToBlur} /></div><div><label className="block text-xs text-gray-500 mb-1">Bill To (Address)</label><textarea className="w-full border rounded px-2 py-1.5 text-sm resize-y min-h-[38px]" placeholder="Street, suburb, state, postcode" value={billToAddress} onChange={(e) => setBillToAddress(e.target.value)} onBlur={handleBillToBlur} /></div></div>
         <div className="mt-3 pt-3 border-t flex justify-end">
           <button
             onClick={handleDeleteQuote}

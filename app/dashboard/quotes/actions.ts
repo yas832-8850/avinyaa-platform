@@ -91,7 +91,7 @@ export async function createQuote(orgId: string, quoteName: string, jobId: strin
 
 export async function updateQuote(
   quoteId: string,
-  updates: { quote_name?: string; job_id?: string | null; pricing_mode?: string; rounding?: string }
+  updates: { quote_name?: string; job_id?: string | null; pricing_mode?: string; rounding?: string ; bill_to_name?: string | null; bill_to_address?: string | null}
 ) {
   const supabase = await createClient();
 
