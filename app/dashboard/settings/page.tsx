@@ -15,6 +15,11 @@ export default function SettingsHubPage() {
       description: "Manage the people who can be assigned to tasks.",
       href: "/dashboard/settings/assignees",
     },
+        {
+      title: "Installers",
+      description: "Manage installers for rollout planning and job allocation.",
+      href: "/dashboard/settings/installers",
+    },
   ];
 
   return (
