@@ -254,6 +254,7 @@ export default function QuoteBuilder({
         >
           Download Internal PDF
         </a>
+                <a href={`/api/quote-pdf-client/${initialQuote.id}`} target="_blank" rel="noopener noreferrer" className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50">Download Client-Safe PDF</a>
       </div>
 
       <div className="border rounded-md p-4">
