@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect, notFound } from "next/navigation";
-import { getRolloutStops } from "../actions";
+import { getRolloutStops, getInstallersForDropdown } from "../actions";
 import RolloutDetailView from "./rollout-detail-view";
 
 export default async function RolloutDetailPage({
@@ -23,13 +23,14 @@ export default async function RolloutDetailPage({
 
   const stops = await getRolloutStops(id);
   if (!stops) notFound();
+    const installers = await getInstallersForDropdown(profile.org_id);
 
   return (
     <div className="p-6 max-w-5xl">
       <div className="mb-4">
         <a href="/dashboard/rollout" className="text-sm text-blue-600 hover:underline">← Back to Rollout Planning</a>
       </div>
-      <RolloutDetailView uploadId={id} initialStops={stops as any} />
+            <RolloutDetailView uploadId={id} initialStops={stops as any} installers={installers} />
     </div>
   );
 }
