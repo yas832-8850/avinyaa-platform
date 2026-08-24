@@ -106,6 +106,7 @@ export default function InstallerManager({
                 <span className="text-sm font-medium">{installer.name}</span>
                 <span className="text-xs text-gray-500 ml-2">{installer.base_state}</span>
                 {installer.phone && <span className="text-xs text-gray-500 ml-2">{installer.phone}</span>}
+                <a href={`/dashboard/rollout/installer/${installer.id}`} className="text-xs text-blue-600 hover:underline ml-2">View Run Sheet</a>
               </div>
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-1 text-xs text-gray-500">
