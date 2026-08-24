@@ -79,6 +79,7 @@ export async function getRolloutStops(uploadId: string) {
     .from("rollout_stops")
     .select("*, installers(name)")
     .eq("rollout_upload_id", uploadId)
+    .order("sequence_order", { ascending: true, nullsFirst: false })
     .order("state", { ascending: true })
     .order("postcode", { ascending: true });
 
@@ -88,6 +89,40 @@ export async function getRolloutStops(uploadId: string) {
   }
 
   return data ?? [];
+}
+
+export async function sortRolloutStops(uploadId: string) {
+  const supabase = await createClient();
+
+  const { data: stops, error: fetchError } = await supabase
+    .from("rollout_stops")
+    .select("id, state, postcode")
+    .eq("rollout_upload_id", uploadId);
+
+  if (fetchError || !stops) {
+    console.error("Failed to fetch stops for sorting:", fetchError?.message);
+    return { success: false, error: fetchError?.message };
+  }
+
+  const sorted = [...stops].sort((a, b) => {
+    if (a.state !== b.state) return a.state.localeCompare(b.state);
+    return a.postcode.localeCompare(b.postcode);
+  });
+
+  for (let i = 0; i < sorted.length; i++) {
+    const { error: updateError } = await supabase
+      .from("rollout_stops")
+      .update({ sequence_order: i + 1 })
+      .eq("id", sorted[i].id);
+
+    if (updateError) {
+      console.error("Failed to update sequence_order:", updateError.message);
+      return { success: false, error: updateError.message };
+    }
+  }
+
+  revalidatePath(`/dashboard/rollout/${uploadId}`);
+  return { success: true };
 }
 
 export async function assignInstaller(stopId: string, installerId: string | null) {
@@ -133,6 +168,7 @@ export async function deleteRolloutUpload(uploadId: string) {
   revalidatePath("/dashboard/rollout");
   return { success: true };
 }
+
 export async function getInstallersForDropdown(orgId: string) {
   const supabase = await createClient();
 
