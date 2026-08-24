@@ -54,13 +54,10 @@ export default function RolloutDetailView({
   async function handleBulkAssign() {
     if (!bulkInstaller) return;
     setBulkAssigning(true);
-    for (const stop of initialStops) {
-      await assignInstaller(stop.id, bulkInstaller);
-    }
+    await Promise.all(initialStops.map((stop) => assignInstaller(stop.id, bulkInstaller)));
     setBulkAssigning(false);
     router.refresh();
   }
-
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
