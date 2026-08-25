@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createAssignee, deleteAssignee } from "./actions";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
 
 type Assignee = {
   id: string;
@@ -41,37 +43,26 @@ export default function AssigneeManager({
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">Add new person</h3>
-        <div className="flex gap-2">
-          <input
-            className="flex-1 border rounded px-2 py-1.5 text-sm"
-            placeholder="Name"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-          />
-          <button
-            onClick={handleAdd}
-            disabled={saving || !newName.trim()}
-            className="bg-blue-600 text-white px-4 py-1.5 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-          >
+      <div className="border border-[#2C313A] bg-[#1E2229] p-4">
+        <h3 className="text-sm font-medium text-[#EDEEF0] mb-3">Add new person</h3>
+        <div className="flex gap-2 items-end">
+          <div className="flex-1">
+            <Input placeholder="Name" value={newName} onChange={(e) => setNewName(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }} />
+          </div>
+          <Button onClick={handleAdd} disabled={saving || !newName.trim()} variant="primary">
             {saving ? "Adding..." : "Add"}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="border rounded-md divide-y">
+      <div className="border border-[#2C313A] divide-y divide-[#2C313A]">
         {assignees.length === 0 && (
-          <p className="p-4 text-sm text-gray-500 text-center">No people added yet.</p>
+          <p className="p-4 text-sm text-[#8B92A0] text-center">No people added yet.</p>
         )}
         {assignees.map((a) => (
           <div key={a.id} className="flex items-center justify-between p-3">
-            <span className="text-sm">{a.name}</span>
-            <button
-              onClick={() => handleDelete(a.id, a.name)}
-              className="text-red-500 hover:text-red-700 text-sm"
-            >
+            <span className="text-sm text-[#EDEEF0]">{a.name}</span>
+            <button onClick={() => handleDelete(a.id, a.name)} className="text-[#E08080] hover:text-[#f0a0a0] text-sm">
               ✕
             </button>
           </div>
