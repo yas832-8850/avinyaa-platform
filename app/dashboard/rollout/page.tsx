@@ -19,9 +19,12 @@ export default async function RolloutPage() {
   const uploads = await getRolloutUploads(profile.org_id);
 
   return (
-    <div className="p-6 max-w-4xl">
-      <h1 className="text-lg font-semibold mb-4">Rollout Planning</h1>
-      <RolloutUploadForm orgId={profile.org_id} userId={user.id} initialUploads={uploads} />
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-4xl">
+        <h1 className="text-lg font-semibold tracking-wide text-[#EDEEF0] mb-1">Rollout Planning</h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mb-6" />
+        <RolloutUploadForm orgId={profile.org_id} userId={user.id} initialUploads={uploads} />
+      </div>
     </div>
   );
 }

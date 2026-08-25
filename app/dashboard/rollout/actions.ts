@@ -12,11 +12,29 @@ type ParsedStop = {
   notes?: string;
 };
 
+export async function getClientOrgs() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("id, name")
+    .eq("type", "client")
+    .order("name");
+
+  if (error) {
+    console.error("Failed to load client orgs:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
 export async function createRolloutUpload(
   orgId: string,
   userId: string,
   fileName: string,
-  stops: ParsedStop[]
+  stops: ParsedStop[],
+  clientOrgId: string | null
 ) {
   const supabase = await createClient();
 
@@ -34,6 +52,7 @@ export async function createRolloutUpload(
   const rowsToInsert = stops.map((stop) => ({
     rollout_upload_id: upload.id,
     org_id: orgId,
+    client_org_id: clientOrgId,
     site_name: stop.site_name,
     address: stop.address,
     suburb: stop.suburb,
@@ -185,40 +204,4 @@ export async function getInstallersForDropdown(orgId: string) {
   }
 
   return data ?? [];
-}
-
-export async function getStopsForInstaller(installerId: string) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("rollout_stops")
-    .select("*, rollout_uploads(file_name)")
-    .eq("installer_id", installerId)
-    .order("sequence_order", { ascending: true, nullsFirst: false })
-    .order("state", { ascending: true })
-    .order("postcode", { ascending: true });
-
-  if (error) {
-    console.error("Failed to load stops for installer:", error.message);
-    return [];
-  }
-
-  return data ?? [];
-}
-
-export async function getInstallerById(installerId: string) {
-  const supabase = await createClient();
-
-  const { data, error } = await supabase
-    .from("installers")
-    .select("*")
-    .eq("id", installerId)
-    .single();
-
-  if (error) {
-    console.error("Failed to load installer:", error.message);
-    return null;
-  }
-
-  return data;
 }
