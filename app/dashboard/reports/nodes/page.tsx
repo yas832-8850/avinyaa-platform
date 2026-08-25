@@ -19,13 +19,16 @@ export default async function NodesReportPage() {
   const { nodes, statuses, assignees } = await getAllNodesReport(profile.org_id);
 
   return (
-    <div className="p-6 max-w-6xl">
-      <div className="mb-4">
-        <a href="/dashboard/job-master" className="text-sm text-blue-600 hover:underline">← Back to Job Master List</a>
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-6xl">
+        <div className="mb-4">
+          <a href="/dashboard/job-master" className="text-sm text-[#4FA8D8] hover:underline">← Back to Job Master List</a>
+        </div>
+        <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0] mb-1">All Tasks Report</h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mb-2" />
+        <p className="text-sm text-[#8B92A0] mb-6">Flat view of every item across all job trees.</p>
+        <NodesReportTable nodes={nodes} statuses={statuses} assignees={assignees} />
       </div>
-      <h1 className="text-xl font-semibold mb-1">All Tasks Report</h1>
-      <p className="text-sm text-gray-500 mb-6">Flat view of every item across all job trees.</p>
-      <NodesReportTable nodes={nodes} statuses={statuses} assignees={assignees} />
     </div>
   );
 }

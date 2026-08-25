@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Select from "../../../components/ui/Select";
 
 type Node = {
   id: string;
@@ -64,94 +65,82 @@ export default function NodesReportTable({
   return (
     <div>
       <div className="flex gap-3 mb-4">
-        <select
-          className="border rounded px-2 py-1.5 text-sm"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-        >
+        <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">All statuses</option>
           {statuses.map((s) => (
             <option key={s.id} value={s.id}>{s.label}</option>
           ))}
-        </select>
+        </Select>
 
-        <select
-          className="border rounded px-2 py-1.5 text-sm"
-          value={assigneeFilter}
-          onChange={(e) => setAssigneeFilter(e.target.value)}
-        >
+        <Select value={assigneeFilter} onChange={(e) => setAssigneeFilter(e.target.value)}>
           <option value="">All assignees</option>
           {assignees.map((a) => (
             <option key={a.id} value={a.id}>{a.name}</option>
           ))}
-        </select>
+        </Select>
 
-        <select
-          className="border rounded px-2 py-1.5 text-sm"
-          value={jobFilter}
-          onChange={(e) => setJobFilter(e.target.value)}
-        >
+        <Select value={jobFilter} onChange={(e) => setJobFilter(e.target.value)}>
           <option value="">All jobs</option>
           {jobOptions.map(([id, label]) => (
             <option key={id} value={id}>{label}</option>
           ))}
-        </select>
+        </Select>
 
         {(statusFilter || assigneeFilter || jobFilter) && (
           <button
             onClick={() => { setStatusFilter(""); setAssigneeFilter(""); setJobFilter(""); }}
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-[#4FA8D8] hover:underline"
           >
             Clear filters
           </button>
         )}
       </div>
 
-      <div className="border rounded-md overflow-hidden">
+      <div className="border border-[#2C313A]">
         <table className="w-full text-sm">
-          <thead className="bg-gray-100 text-left">
+          <thead className="bg-[#1E2229] text-left text-[10px] uppercase tracking-[0.1em] text-[#8B92A0]">
             <tr>
-              <th className="p-2">Job #</th>
-              <th className="p-2">Item</th>
-              <th className="p-2">Status</th>
-              <th className="p-2">Assignee</th>
-              <th className="p-2">Start</th>
-              <th className="p-2">Due</th>
+              <th className="p-3">Job #</th>
+              <th className="p-3">Item</th>
+              <th className="p-3">Status</th>
+              <th className="p-3">Assignee</th>
+              <th className="p-3">Start</th>
+              <th className="p-3">Due</th>
             </tr>
           </thead>
           <tbody>
             {filteredNodes.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-4 text-center text-gray-500">
+                <td colSpan={6} className="p-4 text-center text-[#8B92A0]">
                   No items match the current filters.
                 </td>
               </tr>
             )}
             {filteredNodes.map((n) => (
-              <tr key={n.id} className="border-t">
-                <td className="p-2">
-                  <a href={`/dashboard/job-master/${n.job_id}`} className="text-blue-600 hover:underline">
+              <tr key={n.id} className="border-t border-[#2C313A] text-[#EDEEF0]">
+                <td className="p-3 font-mono">
+                  <a href={`/dashboard/job-master/${n.job_id}`} className="text-[#4FA8D8] hover:underline">
                     {n.job_number}
                   </a>
                 </td>
-                <td className="p-2">
+                <td className="p-3">
                   <span style={{ paddingLeft: `${n.depth * 16}px` }}>{n.name}</span>
                 </td>
-                <td className="p-2">
+                <td className="p-3">
                   {n.status_label ? (
                     <span
-                      className="px-2 py-0.5 rounded text-xs"
-                      style={{ backgroundColor: `${n.status_color}22` }}
+                      className="inline-block border px-2 py-0.5 text-[10px] uppercase tracking-[0.1em]"
+                      style={{ borderColor: n.status_color ?? "#2C313A", color: n.status_color ?? "#8B92A0" }}
                     >
                       {n.status_label}
                     </span>
                   ) : (
-                    <span className="text-gray-400">—</span>
+                    <span className="text-[#565C68]">—</span>
                   )}
                 </td>
-                <td className="p-2">{n.assignee_name ?? "—"}</td>
-                <td className="p-2">{n.start_date ?? "—"}</td>
-                <td className="p-2">{n.due_date ?? "—"}</td>
+                <td className="p-3">{n.assignee_name ?? "—"}</td>
+                <td className="p-3 font-mono text-[#8B92A0]">{n.start_date ?? "—"}</td>
+                <td className="p-3 font-mono text-[#8B92A0]">{n.due_date ?? "—"}</td>
               </tr>
             ))}
           </tbody>
