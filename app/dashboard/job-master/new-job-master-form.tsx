@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createJobMaster, getClientOrgs } from "./actions";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
 
 type ClientOrg = {
   id: string;
@@ -72,41 +75,39 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
   }
 
   if (!open) {
-    return (
-      <button onClick={() => setOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        + New Job
-      </button>
-    );
+    return <Button variant="primary" onClick={() => setOpen(true)}>+ New Job</Button>;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="border rounded-md p-4 space-y-3 bg-gray-50">
+    <form onSubmit={handleSubmit} className="border border-[#2C313A] bg-[#1E2229] p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <select className="border rounded px-2 py-1.5" value={clientOrgId} onChange={(e) => setClientOrgId(e.target.value)}>
-          <option value="">— Select client * —</option>
+        <Select label="Client *" value={clientOrgId} onChange={(e) => setClientOrgId(e.target.value)}>
+          <option value="">— Select client —</option>
           {clientOrgs.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
-        </select>
-        <input className="border rounded px-2 py-1.5" placeholder="Project name *" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-        <input className="border rounded px-2 py-1.5" placeholder="Account manager" value={accountManager} onChange={(e) => setAccountManager(e.target.value)} />
-        <input className="border rounded px-2 py-1.5" placeholder="Client contact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
-        <input type="date" className="border rounded px-2 py-1.5" value={jobDate} onChange={(e) => setJobDate(e.target.value)} />
-        <input className="border rounded px-2 py-1.5" placeholder="Server link (URL)" value={serverLink} onChange={(e) => setServerLink(e.target.value)} />
-        <input className="border rounded px-2 py-1.5 col-span-2" placeholder="Custom job number (optional — leave blank to auto-generate)" value={customJobNumber} onChange={(e) => setCustomJobNumber(e.target.value)} />
+        </Select>
+        <Input label="Project name *" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
+        <Input label="Account manager" value={accountManager} onChange={(e) => setAccountManager(e.target.value)} />
+        <Input label="Client contact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
+        <Input label="Date" type="date" value={jobDate} onChange={(e) => setJobDate(e.target.value)} />
+        <Input label="Server link (URL)" value={serverLink} onChange={(e) => setServerLink(e.target.value)} />
+        <div className="col-span-2">
+          <Input label="Custom job number (optional — leave blank to auto-generate)" value={customJobNumber} onChange={(e) => setCustomJobNumber(e.target.value)} />
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">{error}</div>
+        <div className="border border-[#3A2222] bg-[#221818] text-[#E08080] px-3 py-2 text-sm">{error}</div>
       )}
 
       <div className="flex gap-2">
-        <button type="submit" disabled={submitting} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+        <Button type="submit" variant="primary" disabled={submitting}>
           {submitting ? "Creating..." : "Create Job"}
-        </button>
-        <button type="button" onClick={() => setOpen(false)} className="px-4 py-2 rounded border hover:bg-gray-100">
+        </Button>
+        <Button type="button" variant="secondary" onClick={() => setOpen(false)}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

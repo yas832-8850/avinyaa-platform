@@ -21,13 +21,16 @@ export default async function JobMasterPage() {
   const jobs = await getJobsMaster(profile.org_id);
 
   return (
-    <div className="p-6 max-w-6xl">
-      <h1 className="text-xl font-semibold mb-4">Job Master List</h1>
-      <NewJobMasterForm orgId={profile.org_id} />
-      <div className="mb-4">
-        <SequenceSettings orgId={profile.org_id} />
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-6xl">
+        <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0] mb-1">Job Master List</h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mb-6" />
+        <NewJobMasterForm orgId={profile.org_id} />
+        <div className="my-4">
+          <SequenceSettings orgId={profile.org_id} />
+        </div>
+        <JobsMasterTable jobs={jobs} />
       </div>
-      <JobsMasterTable jobs={jobs} />
     </div>
   );
 }
