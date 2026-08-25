@@ -205,3 +205,39 @@ export async function getInstallersForDropdown(orgId: string) {
 
   return data ?? [];
 }
+
+export async function getStopsForInstaller(installerId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("rollout_stops")
+    .select("*, rollout_uploads(file_name)")
+    .eq("installer_id", installerId)
+    .order("sequence_order", { ascending: true, nullsFirst: false })
+    .order("state", { ascending: true })
+    .order("postcode", { ascending: true });
+
+  if (error) {
+    console.error("Failed to load stops for installer:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+export async function getInstallerById(installerId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("installers")
+    .select("*")
+    .eq("id", installerId)
+    .single();
+
+  if (error) {
+    console.error("Failed to load installer:", error.message);
+    return null;
+  }
+
+  return data;
+}
