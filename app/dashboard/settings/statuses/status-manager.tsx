@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createStatus, updateStatus, deleteStatus, swapStatusPositions } from "./actions";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
 
 type Status = {
   id: string;
@@ -90,38 +92,29 @@ export default function StatusManager({
 
   return (
     <div className="space-y-4">
-      <div className="border rounded-md p-4 space-y-3">
-        <h3 className="font-medium text-sm">Add new status</h3>
+      <div className="border border-[#2C313A] bg-[#1E2229] p-4 space-y-3">
+        <h3 className="text-sm font-medium text-[#EDEEF0]">Add new status</h3>
         <div className="flex gap-2 items-center">
-          <input
-            className="flex-1 border rounded px-2 py-1.5 text-sm"
-            placeholder="Status label"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }}
-          />
+          <div className="flex-1">
+            <Input placeholder="Status label" value={newLabel} onChange={(e) => setNewLabel(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }} />
+          </div>
           <div className="flex gap-1">
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
                 onClick={() => setNewColor(c)}
                 className="w-6 h-6 rounded-full border-2"
-                style={{ backgroundColor: c, borderColor: newColor === c ? "#000" : "transparent" }}
+                style={{ backgroundColor: c, borderColor: newColor === c ? "#EDEEF0" : "transparent" }}
               />
             ))}
           </div>
-          <button
-            onClick={handleAdd}
-            className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700"
-          >
-            Add
-          </button>
+          <Button onClick={handleAdd} variant="primary">Add</Button>
         </div>
       </div>
 
-      <div className="border rounded-md divide-y">
+      <div className="border border-[#2C313A] divide-y divide-[#2C313A]">
         {statuses.length === 0 && (
-          <p className="p-4 text-sm text-gray-500 text-center">No statuses yet — add one above.</p>
+          <p className="p-4 text-sm text-[#8B92A0] text-center">No statuses yet — add one above.</p>
         )}
         {statuses.map((status, index) => (
           <div key={status.id} className="p-3">
@@ -130,14 +123,14 @@ export default function StatusManager({
                 <button
                   onClick={() => handleMove(index, "up")}
                   disabled={index === 0}
-                  className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
+                  className="text-[#8B92A0] hover:text-[#EDEEF0] disabled:opacity-30 text-xs leading-none"
                 >
                   ▲
                 </button>
                 <button
                   onClick={() => handleMove(index, "down")}
                   disabled={index === statuses.length - 1}
-                  className="text-gray-400 hover:text-gray-700 disabled:opacity-30 text-xs leading-none"
+                  className="text-[#8B92A0] hover:text-[#EDEEF0] disabled:opacity-30 text-xs leading-none"
                 >
                   ▼
                 </button>
@@ -145,60 +138,52 @@ export default function StatusManager({
 
               <button
                 onClick={() => openColorPicker(status)}
-                className="w-5 h-5 rounded-full border flex-shrink-0"
+                className="w-5 h-5 rounded-full border border-[#2C313A] flex-shrink-0"
                 style={{ backgroundColor: status.color }}
                 title="Change color"
               />
 
               {editingId === status.id ? (
-                <input
-                  autoFocus
-                  className="flex-1 border rounded px-2 py-1 text-sm"
-                  value={editValue}
-                  onChange={(e) => setEditValue(e.target.value)}
-                  onBlur={() => handleUpdateLabel(status.id)}
-                  onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-                />
+                <div className="flex-1">
+                  <Input
+                    autoFocus
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onBlur={() => handleUpdateLabel(status.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+                  />
+                </div>
               ) : (
                 <span
                   onClick={() => { setEditingId(status.id); setEditValue(status.label); }}
-                  className="flex-1 text-sm px-2 py-1 rounded cursor-pointer hover:bg-gray-50"
-                  style={{ backgroundColor: `${status.color}22` }}
+                  className="flex-1 text-sm px-2 py-1 border cursor-pointer hover:bg-[#15181D]"
+                  style={{ borderColor: status.color, color: status.color }}
                 >
                   {status.label}
                 </span>
               )}
 
-              <button
-                onClick={() => handleDelete(status.id)}
-                className="text-red-500 hover:text-red-700 text-sm"
-              >
+              <button onClick={() => handleDelete(status.id)} className="text-[#E08080] hover:text-[#f0a0a0] text-sm">
                 ✕
               </button>
             </div>
 
             {pickingColorFor === status.id && (
-              <div className="flex items-center gap-2 mt-2 ml-8 p-2 bg-gray-50 rounded border">
+              <div className="flex items-center gap-2 mt-2 ml-8 p-2 bg-[#15181D] border border-[#2C313A]">
                 <div className="flex gap-1">
                   {PRESET_COLORS.map((c) => (
                     <button
                       key={c}
                       onClick={() => setPendingColor(c)}
                       className="w-6 h-6 rounded-full border-2"
-                      style={{ backgroundColor: c, borderColor: pendingColor === c ? "#000" : "transparent" }}
+                      style={{ backgroundColor: c, borderColor: pendingColor === c ? "#EDEEF0" : "transparent" }}
                     />
                   ))}
                 </div>
-                <button
-                  onClick={() => confirmColor(status.id)}
-                  className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-                >
+                <Button onClick={() => confirmColor(status.id)} variant="primary" className="text-xs px-2 py-1">
                   Save
-                </button>
-                <button
-                  onClick={cancelColorPicker}
-                  className="text-xs text-gray-500 hover:underline"
-                >
+                </Button>
+                <button onClick={cancelColorPicker} className="text-xs text-[#8B92A0] hover:underline">
                   Cancel
                 </button>
               </div>
