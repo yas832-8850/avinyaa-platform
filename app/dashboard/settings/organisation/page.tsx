@@ -1,74 +1,31 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { getOrganisation } from "./actions";
+import LogoUploadForm from "./logo-upload-form";
 
-import { useState } from "react";
-import { uploadLogo } from "./actions";
+export default async function OrganisationSettingsPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-export default function LogoUploadForm({
-  orgId,
-  currentLogoUrl,
-}: {
-  orgId: string;
-  currentLogoUrl: string | null;
-}) {
-  const [logoUrl, setLogoUrl] = useState(currentLogoUrl);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("org_id")
+    .eq("id", user.id)
+    .single();
 
-  async function handleUpload() {
-    if (!selectedFile) return;
-    setError(null);
-    setUploading(true);
+  if (!profile) redirect("/login");
 
-    const formData = new FormData();
-    formData.append("logo", selectedFile);
-
-    const result = await uploadLogo(orgId, formData);
-    setUploading(false);
-
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-
-    if (result.logoUrl) {
-      setLogoUrl(result.logoUrl);
-      setSelectedFile(null);
-    }
-  }
+  const org = await getOrganisation(profile.org_id);
 
   return (
-    <div className="border rounded-md p-4 space-y-4">
-      {logoUrl && (
-        <div>
-          <p className="text-xs text-gray-500 mb-2">Current logo:</p>
-          <img src={logoUrl} alt="Organisation logo" className="max-h-24 border rounded p-2" />
-        </div>
-      )}
-
-      <div>
-        <label className="block text-xs text-gray-500 mb-1">Upload new logo (PNG or JPG)</label>
-        <input
-          type="file"
-          accept="image/png,image/jpeg"
-          onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-          className="text-sm"
-        />
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-2xl">
+        <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0] mb-1">Organisation Settings</h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mb-2" />
+        <p className="text-sm text-[#8B92A0] mb-6">Upload your logo — it will appear on quote PDFs.</p>
+        <LogoUploadForm orgId={profile.org_id} currentLogoUrl={org?.logo_url ?? null} />
       </div>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm">
-          {error}
-        </div>
-      )}
-
-      <button
-        onClick={handleUpload}
-        disabled={!selectedFile || uploading}
-        className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-      >
-        {uploading ? "Uploading..." : "Upload Logo"}
-      </button>
     </div>
   );
 }
