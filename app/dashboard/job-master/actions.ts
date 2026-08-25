@@ -44,9 +44,26 @@ async function getNextJobNumber(orgId: string): Promise<{ jobNumber?: string; jo
   };
 }
 
+export async function getClientOrgs() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("id, name")
+    .eq("type", "client")
+    .order("name");
+
+  if (error) {
+    console.error("Failed to load client orgs:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
 export async function createJobMaster(
   orgId: string,
   client: string,
+    clientOrgId: string | null,
   projectName: string,
   accountManager: string,
   clientContact: string,
@@ -90,6 +107,7 @@ export async function createJobMaster(
       job_number: jobNumber,
       job_number_value: jobNumberValue,
       client,
+            client_org_id: clientOrgId,
       project_name: projectName,
       account_manager: accountManager,
       client_contact: clientContact,
