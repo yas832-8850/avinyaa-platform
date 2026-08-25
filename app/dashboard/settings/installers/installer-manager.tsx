@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { createInstaller, updateInstaller, deleteInstaller } from "./actions";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
 
 type Installer = {
   id: string;
@@ -53,74 +56,42 @@ export default function InstallerManager({
 
   return (
     <div className="space-y-6">
-      <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">Add Installer</h3>
+      <div className="border border-[#2C313A] bg-[#1E2229] p-4">
+        <h3 className="text-sm font-medium text-[#EDEEF0] mb-3">Add Installer</h3>
         <div className="grid grid-cols-4 gap-3 items-end">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Name</label>
-            <input
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Phone</label>
-            <input
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Base State</label>
-            <select
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={newState}
-              onChange={(e) => setNewState(e.target.value)}
-            >
-              {STATES.map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-          <button
-            onClick={handleAdd}
-            disabled={saving || !newName.trim()}
-            className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50 disabled:opacity-50"
-          >
+          <Input label="Name" value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <Input label="Phone" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} />
+          <Select label="Base State" value={newState} onChange={(e) => setNewState(e.target.value)}>
+            {STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </Select>
+          <Button variant="primary" onClick={handleAdd} disabled={saving || !newName.trim()}>
             {saving ? "Adding..." : "+ Add"}
-          </button>
+          </Button>
         </div>
       </div>
 
-      <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">All Installers</h3>
+      <div className="border border-[#2C313A] bg-[#1E2229] p-4">
+        <h3 className="text-sm font-medium text-[#EDEEF0] mb-3">All Installers</h3>
         {installers.length === 0 && (
-          <p className="text-sm text-gray-500">No installers yet — add one above.</p>
+          <p className="text-sm text-[#8B92A0]">No installers yet — add one above.</p>
         )}
         <div className="space-y-2">
           {installers.map((installer) => (
-            <div key={installer.id} className="flex items-center justify-between border rounded px-3 py-2">
+            <div key={installer.id} className="flex items-center justify-between border border-[#2C313A] px-3 py-2">
               <div>
-                <span className="text-sm font-medium">{installer.name}</span>
-                <span className="text-xs text-gray-500 ml-2">{installer.base_state}</span>
-                {installer.phone && <span className="text-xs text-gray-500 ml-2">{installer.phone}</span>}
-                <a href={`/dashboard/rollout/installer/${installer.id}`} className="text-xs text-blue-600 hover:underline ml-2">View Run Sheet</a>
+                <span className="text-sm font-medium text-[#EDEEF0]">{installer.name}</span>
+                <span className="text-xs text-[#8B92A0] ml-2 font-mono">{installer.base_state}</span>
+                {installer.phone && <span className="text-xs text-[#8B92A0] ml-2 font-mono">{installer.phone}</span>}
+                <a href={`/dashboard/rollout/installer/${installer.id}`} className="text-xs text-[#4FA8D8] hover:underline ml-2">View Run Sheet</a>
               </div>
               <div className="flex items-center gap-3">
-                <label className="flex items-center gap-1 text-xs text-gray-500">
-                  <input
-                    type="checkbox"
-                    checked={installer.active}
-                    onChange={(e) => handleToggleActive(installer.id, e.target.checked)}
-                  />
+                <label className="flex items-center gap-1 text-xs text-[#8B92A0]">
+                  <input type="checkbox" checked={installer.active} onChange={(e) => handleToggleActive(installer.id, e.target.checked)} />
                   Active
                 </label>
-                <button
-                  onClick={() => handleDelete(installer.id)}
-                  className="text-red-400 hover:text-red-600 text-xs"
-                >
+                <button onClick={() => handleDelete(installer.id)} className="text-xs text-[#E08080] hover:text-[#f0a0a0]">
                   Delete
                 </button>
               </div>
