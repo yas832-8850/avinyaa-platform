@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createQuote, getJobsForDropdown } from "./actions";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
 
 type Quote = {
   id: string;
@@ -51,68 +54,40 @@ export default function QuotesListClient({
   return (
     <div>
       {!creating ? (
-        <button
-          onClick={() => setCreating(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mb-6"
-        >
-          + New Quote
-        </button>
+        <div className="mb-6">
+          <Button variant="primary" onClick={() => setCreating(true)}>+ New Quote</Button>
+        </div>
       ) : (
-        <div className="border rounded-md p-4 mb-6 bg-gray-50 space-y-3">
-          <input
-            autoFocus
-            className="w-full border rounded px-2 py-1.5 text-sm"
-            placeholder="Quote name"
-            value={newQuoteName}
-            onChange={(e) => setNewQuoteName(e.target.value)}
-          />
-          <select
-            className="w-full border rounded px-2 py-1.5 text-sm"
-            value={selectedJobId}
-            onChange={(e) => setSelectedJobId(e.target.value)}
-          >
+        <div className="border border-[#2C313A] bg-[#1E2229] p-4 mb-6 space-y-3">
+          <Input autoFocus placeholder="Quote name" value={newQuoteName} onChange={(e) => setNewQuoteName(e.target.value)} />
+          <Select value={selectedJobId} onChange={(e) => setSelectedJobId(e.target.value)}>
             <option value="">— No linked project —</option>
             {jobOptions.map((j) => (
               <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
             ))}
-          </select>
+          </Select>
           <div className="flex gap-2">
-            <button
-              onClick={handleCreate}
-              disabled={submitting || !newQuoteName.trim()}
-              className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 disabled:opacity-50"
-            >
+            <Button variant="primary" onClick={handleCreate} disabled={submitting || !newQuoteName.trim()}>
               {submitting ? "Creating..." : "Create Quote"}
-            </button>
-            <button
-              onClick={() => setCreating(false)}
-              className="px-3 py-1.5 rounded text-sm border hover:bg-gray-100"
-            >
-              Cancel
-            </button>
+            </Button>
+            <Button variant="secondary" onClick={() => setCreating(false)}>Cancel</Button>
           </div>
         </div>
       )}
 
-      <div className="border rounded-md divide-y">
+      <div className="border border-[#2C313A] divide-y divide-[#2C313A]">
         {initialQuotes.length === 0 && (
-          <p className="p-4 text-sm text-gray-500 text-center">No quotes yet — create your first one above.</p>
+          <p className="p-4 text-sm text-[#8B92A0] text-center">No quotes yet — create your first one above.</p>
         )}
         {initialQuotes.map((q) => (
-          
-          <a  key={q.id}
-            href={`/dashboard/quotes/${q.id}`}
-            className="flex items-center justify-between p-3 hover:bg-gray-50"
-          >
+          <a key={q.id} href={`/dashboard/quotes/${q.id}`} className="flex items-center justify-between p-3 hover:bg-[#1E2229]">
             <div>
-              <div className="text-sm font-medium">{q.quote_name}</div>
+              <div className="text-sm font-medium text-[#EDEEF0]">{q.quote_name}</div>
               {q.jobs_master && (
-                <div className="text-xs text-gray-500">{q.jobs_master.job_number} — {q.jobs_master.project_name}</div>
+                <div className="text-xs text-[#8B92A0] font-mono">{q.jobs_master.job_number} — {q.jobs_master.project_name}</div>
               )}
             </div>
-            <div className="text-xs text-gray-400">
-              {new Date(q.created_at).toLocaleDateString()}
-            </div>
+            <div className="text-xs text-[#565C68] font-mono">{new Date(q.created_at).toLocaleDateString()}</div>
           </a>
         ))}
       </div>

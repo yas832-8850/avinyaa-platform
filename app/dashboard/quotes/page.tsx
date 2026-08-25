@@ -19,10 +19,13 @@ export default async function QuotesPage() {
   const quotes = await getQuotes(profile.org_id);
 
   return (
-    <div className="p-6 max-w-5xl">
-      <h1 className="text-xl font-semibold mb-1">Margin Calculator / Quotes</h1>
-      <p className="text-sm text-gray-500 mb-6">Work out sell price and margin, optionally linked to a job.</p>
-      <QuotesListClient orgId={profile.org_id} initialQuotes={quotes} />
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-5xl">
+        <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0] mb-1">Margin Calculator / Quotes</h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mb-2" />
+        <p className="text-sm text-[#8B92A0] mb-6">Work out sell price and margin, optionally linked to a job.</p>
+        <QuotesListClient orgId={profile.org_id} initialQuotes={quotes} />
+      </div>
     </div>
   );
 }
