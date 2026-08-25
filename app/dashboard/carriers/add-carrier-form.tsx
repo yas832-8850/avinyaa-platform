@@ -2,6 +2,9 @@
 
 import { useState, useRef } from "react";
 import { addCarrier } from "./actions";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Select from "../../components/ui/Select";
 
 export default function AddCarrierForm() {
   const [error, setError] = useState<string | null>(null);
@@ -28,43 +31,20 @@ export default function AddCarrierForm() {
     <form
       ref={formRef}
       action={handleSubmit}
-      className="flex flex-wrap items-end gap-3 rounded-lg border bg-gray-50 p-4"
+      className="flex flex-wrap items-end gap-3 border border-[#2C313A] bg-[#1E2229] p-4"
     >
-      <div>
-        <label className="block text-xs font-medium text-gray-700">
-          Carrier name
-        </label>
-        <input
-          name="name"
-          required
-          placeholder="e.g. Toll"
-          className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        />
-      </div>
+      <Input name="name" required label="Carrier name" placeholder="e.g. Toll" />
 
-      <div>
-        <label className="block text-xs font-medium text-gray-700">
-          Service type
-        </label>
-        <select
-          name="service_type"
-          required
-          className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-        >
-          <option value="freight">Freight</option>
-          <option value="install">Install</option>
-        </select>
-      </div>
+      <Select name="service_type" required label="Service type">
+        <option value="freight">Freight</option>
+        <option value="install">Install</option>
+      </Select>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-      >
+      <Button type="submit" variant="primary" disabled={loading}>
         {loading ? "Adding..." : "Add carrier"}
-      </button>
+      </Button>
 
-      {error && <p className="w-full text-sm text-red-600">{error}</p>}
+      {error && <p className="w-full text-sm text-[#E08080]">{error}</p>}
     </form>
   );
 }
