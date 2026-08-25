@@ -150,7 +150,7 @@ export default function RolloutUploadForm({
         <p className="text-xs text-[#8B92A0] mb-3">
           CSV or Excel file with columns: Site Name, Address, Suburb, State, Postcode (Notes optional).
         </p>
-        <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="text-sm text-[#8B92A0]" />
+       <input type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} className="text-sm text-[#8B92A0] file:mr-3 file:px-4 file:py-2 file:border-0 file:bg-[#F0A83A] file:text-[#15181D] file:text-sm file:font-medium file:cursor-pointer hover:file:opacity-90" /> 
 
         {parseError && (
           <p className="text-sm text-[#E08080] mt-2">{parseError}</p>
