@@ -6,6 +6,8 @@ import FreightLinesTable, { type FreightLine } from "./freight-lines-table";
 import { createJobWithLines } from "./actions";
 import ContactPicker, { type ContactFormData } from "./contact-picker";
 import { type Contact } from "./contacts-actions";
+import Button from "../../../components/ui/Button";
+import Select from "../../../components/ui/Select";
 
 export default function MultiLineJobForm({
   orgId,
@@ -78,40 +80,26 @@ export default function MultiLineJobForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-4xl">
       <div className="grid grid-cols-3 gap-4">
+        <Select label="Carrier" value={carrierId} onChange={(e) => setCarrierId(e.target.value)}>
+          <option value="">Select carrier...</option>
+          {carriers.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </Select>
         <div>
-          <label className="block text-sm font-medium mb-1">Carrier</label>
-          <select
-            className="w-full border rounded px-2 py-1.5"
-            value={carrierId}
-            onChange={(e) => setCarrierId(e.target.value)}
-          >
-            <option value="">Select carrier...</option>
-            {carriers.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Zone</label>
+          <label className="block text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-2">Zone</label>
           <input
-            className="w-full border rounded px-2 py-1.5"
+            className="w-full border border-[#2C313A] bg-[#15181D] px-3 py-2.5 text-sm text-[#EDEEF0] outline-none transition-colors focus:border-[#F0A83A]"
             value={zone}
             onChange={(e) => setZone(e.target.value)}
             placeholder="e.g. NSW Metro"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Job Type</label>
-          <select
-            className="w-full border rounded px-2 py-1.5"
-            value={jobType}
-            onChange={(e) => setJobType(e.target.value)}
-          >
-            <option value="delivery">Delivery</option>
-            <option value="pickup">Pickup</option>
-            <option value="installation">Installation</option>
-          </select>
-        </div>
+        <Select label="Job Type" value={jobType} onChange={(e) => setJobType(e.target.value)}>
+          <option value="delivery">Delivery</option>
+          <option value="pickup">Pickup</option>
+          <option value="installation">Installation</option>
+        </Select>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -130,14 +118,14 @@ export default function MultiLineJobForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Freight Details</label>
+        <label className="block text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-2">Freight Details</label>
         <FreightLinesTable onChange={setLines} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Notes</label>
+        <label className="block text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-2">Notes</label>
         <textarea
-          className="w-full border rounded px-2 py-1.5"
+          className="w-full border border-[#2C313A] bg-[#15181D] px-3 py-2.5 text-sm text-[#EDEEF0] outline-none transition-colors focus:border-[#F0A83A]"
           rows={3}
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -145,18 +133,14 @@ export default function MultiLineJobForm({
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="border border-[#3A2222] bg-[#221818] text-[#E08080] px-4 py-3">
           {error}
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-      >
+      <Button type="submit" variant="primary" disabled={submitting}>
         {submitting ? "Booking..." : "Book Job"}
-      </button>
+      </Button>
     </form>
   );
 }

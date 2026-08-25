@@ -24,8 +24,9 @@ export default async function NewMultiLineJobPage() {
   const contacts = await getContacts(profile.org_id);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">New Booking (Multi-Line)</h1>
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0] mb-1">New Booking (Multi-Line)</h1>
+      <div className="h-[2px] w-10 bg-[#F0A83A] mb-6" />
       <MultiLineJobForm orgId={profile.org_id} carriers={carriers ?? []} contacts={contacts} />
     </div>
   );
