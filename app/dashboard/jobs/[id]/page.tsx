@@ -2,6 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import EditJobForm from "./edit-job-form";
 import PodUpload from "./pod-upload";
+import StatusChip from "../../../components/ui/StatusChip";
 
 export default async function EditJobPage({
   params,
@@ -25,10 +26,12 @@ export default async function EditJobPage({
 
   if (profile?.role !== "super_admin") {
     return (
-      <div className="mx-auto max-w-2xl p-8">
-        <p className="text-sm text-gray-600">
-          Editing jobs is only available to the master account.
-        </p>
+      <div className="min-h-screen bg-[#15181D] p-8">
+        <div className="mx-auto max-w-2xl">
+          <p className="text-sm text-[#8B92A0]">
+            Editing jobs is only available to the master account.
+          </p>
+        </div>
       </div>
     );
   }
@@ -54,23 +57,26 @@ export default async function EditJobPage({
   );
 
   return (
-    <div className="mx-auto max-w-3xl p-8">
-      <a href="/dashboard" className="text-sm text-gray-500 hover:underline">
-        ← Back to dashboard
-      </a>
-      <h1 className="mt-2 text-2xl font-semibold text-gray-900">
-        Edit Job — {job.job_type}
-      </h1>
-      <p className="mt-1 text-sm text-gray-500">
-        Booked {new Date(job.created_at).toLocaleDateString()} · Status:{" "}
-        {job.status.replace("_", " ")}
-      </p>
+    <div className="min-h-screen bg-[#15181D] p-8">
+      <div className="mx-auto max-w-3xl">
+        <a href="/dashboard" className="text-sm text-[#4FA8D8] hover:underline">
+          ← Back to dashboard
+        </a>
+        <h1 className="mt-2 text-2xl font-semibold tracking-wide text-[#EDEEF0]">
+          Edit Job — {job.job_type}
+        </h1>
+        <div className="h-[2px] w-10 bg-[#F0A83A] mt-2 mb-2" />
+        <p className="text-sm text-[#8B92A0] flex items-center gap-2">
+          <span className="font-mono">Booked {new Date(job.created_at).toLocaleDateString()}</span>
+          <StatusChip status={job.status} />
+        </p>
 
-      <div className="mt-6">
-        <EditJobForm job={job} />
+        <div className="mt-6">
+          <EditJobForm job={job} />
+        </div>
+
+        <PodUpload jobId={id} existingPods={existingPods} />
       </div>
-
-      <PodUpload jobId={id} existingPods={existingPods} />
     </div>
   );
 }

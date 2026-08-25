@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateJob } from "./actions";
+import Button from "../../../components/ui/Button";
+import Input from "../../../components/ui/Input";
+import Select from "../../../components/ui/Select";
 
 type Job = {
   id: string;
@@ -40,75 +43,47 @@ export default function EditJobForm({ job }: { job: Job }) {
   return (
     <form
       action={handleSubmit}
-      className="flex flex-col gap-4 rounded-lg border bg-gray-50 p-6"
+      className="flex flex-col gap-4 border border-[#2C313A] bg-[#1E2229] p-6"
     >
       <div className="flex flex-wrap gap-3">
-        <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Job type
-          </label>
-          <select
-            name="job_type"
-            defaultValue={job.job_type}
-            required
-            className="mt-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          >
-            <option value="freight">Freight</option>
-            <option value="install">Install</option>
-          </select>
-        </div>
+        <Select name="job_type" defaultValue={job.job_type} required label="Job type">
+          <option value="freight">Freight</option>
+          <option value="install">Install</option>
+        </Select>
 
-        <div>
-          <label className="block text-xs font-medium text-gray-700">
-            Cost rate ($)
-          </label>
-          <input
-            name="cost_rate"
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            defaultValue={job.cost_rate}
-            className="mt-1 w-28 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
-          />
+        <div className="w-28">
+          <Input name="cost_rate" type="number" step="0.01" min="0" required defaultValue={job.cost_rate} label="Cost rate ($)" />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-700">
-          Notes
-        </label>
+        <label className="block text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-2">Notes</label>
         <textarea
           name="notes"
           rows={2}
           defaultValue={job.notes ?? ""}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="w-full border border-[#2C313A] bg-[#15181D] px-3 py-2.5 text-sm text-[#EDEEF0] outline-none transition-colors focus:border-[#F0A83A]"
         />
       </div>
 
-      <div className="rounded-md border border-dashed border-gray-300 bg-white p-3 text-sm text-gray-700">
-        Current margin: <span className="font-medium">{job.margin_percent}%</span>
+      <div className="border border-dashed border-[#2C313A] bg-[#15181D] p-3 text-sm text-[#EDEEF0]">
+        Current margin: <span className="font-mono text-[#F0A83A]">{job.margin_percent}%</span>
         {" · "}
-        Current sell rate:{" "}
-        <span className="font-semibold text-gray-900">${job.sell_rate}</span>
-        <p className="mt-1 text-xs text-gray-400">
+        Current sell rate: <span className="font-mono font-semibold">${job.sell_rate}</span>
+        <p className="mt-1 text-xs text-[#8B92A0]">
           Saving will recalculate the sell rate using the current margin rule
           for this client/carrier.
         </p>
       </div>
 
       <div>
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <Button type="submit" variant="primary" disabled={loading}>
           {loading ? "Saving..." : "Save changes"}
-        </button>
+        </Button>
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
-      {successMsg && <p className="text-sm text-green-600">{successMsg}</p>}
+      {error && <p className="text-sm text-[#E08080]">{error}</p>}
+      {successMsg && <p className="text-sm text-[#5FB88A]">{successMsg}</p>}
     </form>
   );
 }
