@@ -1,23 +1,10 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import AddMarginRuleForm from "./add-margin-rule-form";
+import { getAuthContext } from "@/lib/auth";
 
 export default async function MarginRulesPage() {
-  const supabase = await createClient();
+  const { supabase, isSuperAdmin } = await getAuthContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "super_admin") {
+  if (!isSuperAdmin) {
     return (
       <div className="min-h-screen bg-[#15181D] p-8">
         <div className="mx-auto max-w-2xl">
