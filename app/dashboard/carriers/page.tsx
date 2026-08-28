@@ -1,24 +1,11 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import AddCarrierForm from "./add-carrier-form";
 import StatusChip from "../../components/ui/StatusChip";
+import { getAuthContext } from "@/lib/auth";
 
 export default async function CarriersPage() {
-  const supabase = await createClient();
+  const { supabase, isSuperAdmin } = await getAuthContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-
-  if (profile?.role !== "super_admin") {
+  if (!isSuperAdmin) {
     return (
       <div className="min-h-screen bg-[#15181D] p-8">
         <div className="mx-auto max-w-2xl">
