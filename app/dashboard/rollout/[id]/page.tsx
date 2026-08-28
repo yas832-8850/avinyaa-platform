@@ -23,14 +23,17 @@ export default async function RolloutDetailPage({
 
   const stops = await getRolloutStops(id);
   if (!stops) notFound();
-    const installers = await getInstallersForDropdown(profile.org_id);
+
+  const installers = await getInstallersForDropdown(profile.org_id);
 
   return (
-    <div className="p-6 max-w-5xl">
-      <div className="mb-4">
-        <a href="/dashboard/rollout" className="text-sm text-blue-600 hover:underline">← Back to Rollout Planning</a>
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-5xl">
+        <div className="mb-4">
+          <a href="/dashboard/rollout" className="text-sm text-[#4FA8D8] hover:underline">← Back to Rollout Planning</a>
+        </div>
+        <RolloutDetailView uploadId={id} initialStops={stops as any} installers={installers} />
       </div>
-            <RolloutDetailView uploadId={id} initialStops={stops as any} installers={installers} />
     </div>
   );
 }
