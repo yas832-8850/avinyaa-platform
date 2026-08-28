@@ -1,33 +1,22 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import JobStatusActions from "./job-status-actions";
 import SignOutButton from "./signout-button";
 import Button from "../components/ui/Button";
 import StatusChip from "../components/ui/StatusChip";
+import { getAuthContext } from "@/lib/auth";
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
+  const { supabase, user, profile, orgId, isSuperAdmin } = await getAuthContext();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*, organisations(name, type)")
-    .eq("id", user!.id)
-    .single();
-
-  const isSuperAdmin = profile?.role === "super_admin";
-
-  const { data: jobs } = await supabase
+  let jobsQuery = supabase
     .from("jobs")
     .select("*")
     .order("created_at", { ascending: false });
+
+  if (!isSuperAdmin) {
+    jobsQuery = jobsQuery.eq("org_id", orgId);
+  }
+
+  const { data: jobs } = await jobsQuery;
 
   const jobsWithPods = await Promise.all(
     (jobs ?? []).map(async (job) => {
