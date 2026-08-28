@@ -36,20 +36,22 @@ export default async function JobDetailPage({
   ]);
 
   return (
-    <div className="p-6 max-w-6xl">
-      <div className="mb-4">
-        <a href="/dashboard/job-master" className="text-sm text-blue-600 hover:underline">← Back to Job Master List</a>
-      </div>
-      <h1 className="text-xl font-semibold">{job.job_number} — {job.project_name}</h1>
-      <p className="text-sm text-gray-500 mb-6">{job.client}</p>
+    <div className="min-h-screen bg-[#15181D] p-6">
+      <div className="max-w-6xl">
+        <div className="mb-4">
+          <a href="/dashboard/job-master" className="text-sm text-[#4FA8D8] hover:underline">← Back to Job Master List</a>
+        </div>
+        <h1 className="text-xl font-semibold tracking-wide text-[#EDEEF0]">{job.job_number} — {job.project_name}</h1>
+        <p className="text-sm text-[#8B92A0] mb-6">{job.client}</p>
 
-      <JobNodeTree
-        jobId={id}
-        orgId={profile.org_id}
-        initialNodes={nodes}
-        statuses={statuses}
-        initialAssignees={assignees}
-      />
+        <JobNodeTree
+          jobId={id}
+          orgId={profile.org_id}
+          initialNodes={nodes}
+          statuses={statuses}
+          initialAssignees={assignees}
+        />
+      </div>
     </div>
   );
 }

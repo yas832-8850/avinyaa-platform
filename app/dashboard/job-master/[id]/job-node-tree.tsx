@@ -139,8 +139,8 @@ export default function JobNodeTree({
 
   return (
     <div>
-      <div className="border rounded-md">
-        <div className="grid grid-cols-12 gap-2 bg-gray-100 p-2 text-xs font-medium text-gray-600">
+      <div className="border border-[#2C313A]">
+        <div className="grid grid-cols-12 gap-2 bg-[#1E2229] p-2 text-[10px] uppercase tracking-[0.1em] text-[#8B92A0]">
           <div className="col-span-4">Name</div>
           <div className="col-span-2">Status</div>
           <div className="col-span-2">Assignee</div>
@@ -169,7 +169,7 @@ export default function JobNodeTree({
       </div>
       <button
         onClick={() => handleAddNode(null)}
-        className="mt-3 text-sm text-blue-600 hover:underline"
+        className="mt-3 text-sm text-[#4FA8D8] hover:underline"
       >
         + Add item
       </button>
@@ -230,7 +230,7 @@ function NodeRow({
   return (
     <div>
       <div
-        className={`grid grid-cols-12 gap-2 items-center p-2 border-t text-sm ${isDragging ? "opacity-40" : ""} ${dragOver ? "bg-blue-50" : ""}`}
+        className={`grid grid-cols-12 gap-2 items-center p-2 border-t border-[#2C313A] text-sm text-[#EDEEF0] ${isDragging ? "opacity-40" : ""} ${dragOver ? "bg-[#1E2229]" : ""}`}
         onDragOver={(e) => {
           e.preventDefault();
           if (draggedId && draggedId !== node.id) setDragOver(true);
@@ -247,13 +247,13 @@ function NodeRow({
             draggable
             onDragStart={() => onDragStart(node.id)}
             onDragEnd={onDragEnd}
-            className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing select-none"
+            className="text-[#565C68] hover:text-[#8B92A0] cursor-grab active:cursor-grabbing select-none"
             title="Drag to reorder"
           >
             ⠿
           </span>
           {children.length > 0 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-gray-400 w-4">
+            <button onClick={() => setExpanded(!expanded)} className="text-[#8B92A0] w-4">
               {expanded ? "▾" : "▸"}
             </button>
           )}
@@ -261,7 +261,7 @@ function NodeRow({
           {editingName ? (
             <input
               autoFocus
-              className="border rounded px-1 py-0.5 w-full"
+              className="border border-[#2C313A] bg-[#15181D] text-[#EDEEF0] px-1 py-0.5 w-full outline-none focus:border-[#F0A83A]"
               value={nameValue}
               onChange={(e) => setNameValue(e.target.value)}
               onBlur={() => {
@@ -281,14 +281,17 @@ function NodeRow({
 
         <div className="col-span-2">
           <select
-            className="w-full text-xs border rounded px-1 py-1"
+            className="w-full text-xs border px-1 py-1 bg-[#15181D]"
             value={node.status_id ?? ""}
             onChange={(e) => onUpdateNode(node.id, { status_id: e.target.value || null })}
-            style={{ backgroundColor: currentStatus ? `${currentStatus.color}22` : undefined }}
+            style={{
+              borderColor: currentStatus ? currentStatus.color : "#2C313A",
+              color: currentStatus ? currentStatus.color : "#EDEEF0",
+            }}
           >
-            <option value="">—</option>
+            <option value="" style={{ color: "#EDEEF0", backgroundColor: "#15181D" }}>—</option>
             {statuses.map((s) => (
-              <option key={s.id} value={s.id}>{s.label}</option>
+              <option key={s.id} value={s.id} style={{ color: "#EDEEF0", backgroundColor: "#15181D" }}>{s.label}</option>
             ))}
           </select>
         </div>
@@ -297,7 +300,7 @@ function NodeRow({
           {addingAssignee ? (
             <input
               autoFocus
-              className="w-full text-xs border rounded px-1 py-1"
+              className="w-full text-xs border border-[#2C313A] bg-[#15181D] text-[#EDEEF0] px-1 py-1 outline-none focus:border-[#F0A83A]"
               placeholder="Name, Enter to save"
               value={newAssigneeName}
               onChange={(e) => setNewAssigneeName(e.target.value)}
@@ -309,7 +312,7 @@ function NodeRow({
             />
           ) : (
             <select
-              className="w-full text-xs border rounded px-1 py-1"
+              className="w-full text-xs border border-[#2C313A] bg-[#15181D] text-[#EDEEF0] px-1 py-1"
               value={node.assignee_id ?? ""}
               onChange={(e) => {
                 if (e.target.value === "__new__") {
@@ -331,7 +334,7 @@ function NodeRow({
         <div className="col-span-1">
           <input
             type="date"
-            className="w-full text-xs border rounded px-1 py-1"
+            className="w-full text-xs border border-[#2C313A] bg-[#15181D] text-[#EDEEF0] px-1 py-1"
             value={node.start_date ?? ""}
             onChange={(e) => onUpdateNode(node.id, { start_date: e.target.value || null })}
           />
@@ -340,17 +343,17 @@ function NodeRow({
         <div className="col-span-1">
           <input
             type="date"
-            className="w-full text-xs border rounded px-1 py-1"
+            className="w-full text-xs border border-[#2C313A] bg-[#15181D] text-[#EDEEF0] px-1 py-1"
             value={node.due_date ?? ""}
             onChange={(e) => onUpdateNode(node.id, { due_date: e.target.value || null })}
           />
         </div>
 
         <div className="col-span-2 flex gap-2 justify-end text-xs">
-          <button onClick={() => onAddNode(node.id)} className="text-blue-600 hover:underline">
+          <button onClick={() => onAddNode(node.id)} className="text-[#4FA8D8] hover:underline">
             + Sub
           </button>
-          <button onClick={() => onDeleteNode(node.id)} className="text-red-500 hover:underline">
+          <button onClick={() => onDeleteNode(node.id)} className="text-[#E08080] hover:underline">
             ✕
           </button>
         </div>
