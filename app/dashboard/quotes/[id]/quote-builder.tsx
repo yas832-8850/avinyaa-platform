@@ -22,8 +22,8 @@ type Quote = {
   job_id: string | null;
   pricing_mode: string | null;
   rounding: string | null;
-    bill_to_name: string | null;
-      bill_to_address: string | null;
+  bill_to_name: string | null;
+  bill_to_address: string | null;
 };
 
 type Tier = {
@@ -73,6 +73,10 @@ function applyRounding(amount: number, rounding: string): number {
   return Math.round(amount * 100) / 100;
 }
 
+const inputCls = "w-full border border-[#2C313A] bg-[#15181D] px-2 py-1.5 text-sm text-[#EDEEF0] outline-none transition-colors focus:border-[#F0A83A]";
+const labelCls = "block text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-1";
+const cardCls = "border border-[#2C313A] bg-[#1E2229] p-4";
+
 export default function QuoteBuilder({
   orgId,
   initialQuote,
@@ -95,13 +99,13 @@ export default function QuoteBuilder({
   const [rounding, setRounding] = useState(initialQuote.rounding ?? "none");
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [lines, setLines] = useState<Line[]>(initialLines);
+  const [billToName, setBillToName] = useState(initialQuote.bill_to_name ?? "");
+  const [billToAddress, setBillToAddress] = useState(initialQuote.bill_to_address ?? "");
 
   const [freightCostInput, setFreightCostInput] = useState(String(initialFreight?.amount ?? 0));
   const [freightMarginInput, setFreightMarginInput] = useState(String(initialFreight?.margin_percent ?? 0));
   const [freightNotes, setFreightNotes] = useState(initialFreight?.notes ?? "");
   const [freightIncluded, setFreightIncluded] = useState(initialFreight?.included ?? true);
-    const [billToName, setBillToName] = useState(initialQuote.bill_to_name ?? "");
-      const [billToAddress, setBillToAddress] = useState(initialQuote.bill_to_address ?? "");
   const [nodeOptions, setNodeOptions] = useState<NodeOption[]>([]);
   const [savingName, setSavingName] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -125,20 +129,8 @@ export default function QuoteBuilder({
   }
 
   async function handleJobChange(newJobId: string) {
-    async function handleJobChange(newJobId: string) {
     setJobId(newJobId);
     await updateQuote(initialQuote.id, { job_id: newJobId || null });
-  }
-    
-    setJobId(newJobId);
-    await updateQuote(initialQuote.id, { job_id: newJobId || null });
-  }
-
-    async function handleBillToBlur() {
-    await updateQuote(initialQuote.id, {
-      bill_to_name: billToName.trim() || null,
-      bill_to_address: billToAddress.trim() || null,
-    });
   }
 
   async function handlePricingModeChange(mode: string) {
@@ -149,6 +141,13 @@ export default function QuoteBuilder({
   async function handleRoundingChange(newRounding: string) {
     setRounding(newRounding);
     await updateQuote(initialQuote.id, { rounding: newRounding });
+  }
+
+  async function handleBillToBlur() {
+    await updateQuote(initialQuote.id, {
+      bill_to_name: billToName.trim() || null,
+      bill_to_address: billToAddress.trim() || null,
+    });
   }
 
   async function handleTierChange(tierId: string, newMargin: number) {
@@ -254,68 +253,37 @@ export default function QuoteBuilder({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
-        <button
-          onClick={handleCopySummary}
-          className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50"
-        >
-          {copyFeedback ? "Copied!" : "Copy summary"}
-        </button>      
-        
-         <a href={`/api/quote-pdf/${initialQuote.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50"
-        >
-          Download Internal PDF
-        </a>
-                <a href={`/api/quote-pdf-client/${initialQuote.id}`} target="_blank" rel="noopener noreferrer" className="text-sm border rounded px-3 py-1.5 hover:bg-gray-50">Download Client-Safe PDF</a>
+    <div className="min-h-screen bg-[#15181D] p-6 space-y-6">
+      <div className="flex justify-end gap-2">
+        <button onClick={handleCopySummary} className="text-sm border border-[#2C313A] text-[#EDEEF0] px-3 py-1.5 hover:bg-[#1E2229]">{copyFeedback ? "Copied!" : "Copy summary"}</button>
+        <a href={`/api/quote-pdf/${initialQuote.id}`} target="_blank" rel="noopener noreferrer" className="text-sm border border-[#2C313A] text-[#EDEEF0] px-3 py-1.5 hover:bg-[#1E2229]">Download Internal PDF</a>
+        <a href={`/api/quote-pdf-client/${initialQuote.id}`} target="_blank" rel="noopener noreferrer" className="text-sm border border-[#2C313A] text-[#EDEEF0] px-3 py-1.5 hover:bg-[#1E2229]">Download Client-Safe PDF</a>
       </div>
 
-      <div className="border rounded-md p-4">
+      <div className={cardCls}>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Quote Name</label>
-            <input
-              className="w-full border rounded px-2 py-1.5 text-sm font-medium"
-              value={quoteName}
-              onChange={(e) => setQuoteName(e.target.value)}
-              onBlur={handleNameBlur}
-            />
-            {savingName && <span className="text-xs text-gray-400">Saving...</span>}
+            <label className={labelCls}>Quote Name</label>
+            <input className={`${inputCls} font-medium`} value={quoteName} onChange={(e) => setQuoteName(e.target.value)} onBlur={handleNameBlur} />
+            {savingName && <span className="text-xs text-[#8B92A0]">Saving...</span>}
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Linked Project</label>
-            <select
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={jobId}
-              onChange={(e) => handleJobChange(e.target.value)}
-            >
+            <label className={labelCls}>Linked Project</label>
+            <select className={inputCls} value={jobId} onChange={(e) => handleJobChange(e.target.value)}>
               <option value="">— None —</option>
-              {jobOptions.map((j) => (
-                <option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>
-              ))}
+              {jobOptions.map((j) => (<option key={j.id} value={j.id}>{j.job_number} — {j.project_name}</option>))}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Pricing</label>
-            <select
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={pricingMode}
-              onChange={(e) => handlePricingModeChange(e.target.value)}
-            >
+            <label className={labelCls}>Pricing</label>
+            <select className={inputCls} value={pricingMode} onChange={(e) => handlePricingModeChange(e.target.value)}>
               <option value="ex_gst">Ex. GST</option>
               <option value="inc_gst">Inc. GST</option>
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">Rounding</label>
-            <select
-              className="w-full border rounded px-2 py-1.5 text-sm"
-              value={rounding}
-              onChange={(e) => handleRoundingChange(e.target.value)}
-            >
+            <label className={labelCls}>Rounding</label>
+            <select className={inputCls} value={rounding} onChange={(e) => handleRoundingChange(e.target.value)}>
               <option value="none">No rounding</option>
               <option value="nearest_dollar">Nearest dollar</option>
               <option value="nearest_10">Nearest $10</option>
@@ -323,142 +291,84 @@ export default function QuoteBuilder({
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t grid grid-cols-2 gap-4"><div><label className="block text-xs text-gray-500 mb-1">Bill To (Name)</label><input className="w-full border rounded px-2 py-1.5 text-sm" placeholder="Client / company name" value={billToName} onChange={(e) => setBillToName(e.target.value)} onBlur={handleBillToBlur} /></div><div><label className="block text-xs text-gray-500 mb-1">Bill To (Address)</label><textarea className="w-full border rounded px-2 py-1.5 text-sm resize-y min-h-[38px]" placeholder="Street, suburb, state, postcode" value={billToAddress} onChange={(e) => setBillToAddress(e.target.value)} onBlur={handleBillToBlur} /></div></div>
-        <div className="mt-3 pt-3 border-t flex justify-end">
-          <button
-            onClick={handleDeleteQuote}
-            className="text-sm text-red-500 hover:text-red-700"
-          >
-            Delete Quote
-          </button>
+        <div className="mt-4 pt-4 border-t border-[#2C313A] grid grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Bill To (Name)</label>
+            <input className={inputCls} placeholder="Client / company name" value={billToName} onChange={(e) => setBillToName(e.target.value)} onBlur={handleBillToBlur} />
+          </div>
+          <div>
+            <label className={labelCls}>Bill To (Address)</label>
+            <textarea className={`${inputCls} resize-y min-h-[38px]`} placeholder="Street, suburb, state, postcode" value={billToAddress} onChange={(e) => setBillToAddress(e.target.value)} onBlur={handleBillToBlur} />
+          </div>
+        </div>
+
+        <div className="mt-3 pt-3 border-t border-[#2C313A] flex justify-end">
+          <button onClick={handleDeleteQuote} className="text-sm text-[#E08080] hover:text-[#f0a0a0]">Delete Quote</button>
         </div>
       </div>
 
-      <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">Margin Tiers</h3>
+      <div className={cardCls}>
+        <h3 className="text-sm font-medium text-[#EDEEF0] mb-3">Margin Tiers</h3>
         <div className="flex flex-wrap gap-2 items-center">
           {tiers.map((tier) => (
-            <div key={tier.id} className="flex items-center gap-1 border rounded px-2 py-1 bg-gray-50">
-              <span className="text-xs text-gray-500">Tier {tier.tier_number}</span>
-              <input
-                type="number"
-                className="w-14 border rounded px-1 py-0.5 text-sm"
-                value={tier.margin_percent}
-                onFocus={selectAllOnFocus}
-                onChange={(e) => handleTierChange(tier.id, parseFloat(e.target.value) || 0)}
-              />
-              <span className="text-xs text-gray-500">%</span>
-              <button
-                onClick={() => handleDeleteTier(tier.id)}
-                className="text-red-400 hover:text-red-600 text-xs ml-1"
-              >
-                ✕
-              </button>
+            <div key={tier.id} className="flex items-center gap-1 border border-[#2C313A] bg-[#15181D] px-2 py-1">
+              <span className="text-xs text-[#8B92A0]">Tier {tier.tier_number}</span>
+              <input type="number" className="w-14 border border-[#2C313A] bg-[#1E2229] px-1 py-0.5 text-sm text-[#EDEEF0]" value={tier.margin_percent} onFocus={selectAllOnFocus} onChange={(e) => handleTierChange(tier.id, parseFloat(e.target.value) || 0)} />
+              <span className="text-xs text-[#8B92A0]">%</span>
+              <button onClick={() => handleDeleteTier(tier.id)} className="text-[#E08080] hover:text-[#f0a0a0] text-xs ml-1">✕</button>
             </div>
           ))}
-          <button
-            onClick={handleAddTier}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            + Add tier
-          </button>
+          <button onClick={handleAddTier} className="text-sm text-[#4FA8D8] hover:underline">+ Add tier</button>
         </div>
       </div>
 
-      <div className="border rounded-md p-4">
-        <h3 className="font-medium text-sm mb-3">Line Items</h3>
+      <div className={cardCls}>
+        <h3 className="text-sm font-medium text-[#EDEEF0] mb-3">Line Items</h3>
         <div className="space-y-4">
-          {lines.length === 0 && (
-            <p className="text-sm text-gray-500">No line items yet — add one below.</p>
-          )}
+          {lines.length === 0 && (<p className="text-sm text-[#8B92A0]">No line items yet — add one below.</p>)}
           {lines.map((line, index) => {
             const sellPrice = getTierSellPrice(line.unit_cost, line.tier_used_id);
             const total = lineTotals[index];
             return (
-              <div key={line.id} className="border rounded-md p-3 space-y-2">
+              <div key={line.id} className="border border-[#2C313A] p-3 space-y-2">
                 <div className="flex items-start gap-2">
-                  <textarea
-                    className="flex-1 border rounded px-2 py-1.5 text-sm resize-y min-h-[60px]"
-                    placeholder="Description — type as much detail as you need"
-                    value={line.description ?? ""}
-                    onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, description: e.target.value } : l)))}
-                    onBlur={(e) => handleUpdateLine(line.id, { description: e.target.value })}
-                  />
-                  <input
-                    className="w-32 border rounded px-2 py-1.5 text-sm"
-                    placeholder="Code"
-                    value={line.code ?? ""}
-                    onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, code: e.target.value } : l)))}
-                    onBlur={(e) => handleUpdateLine(line.id, { code: e.target.value })}
-                  />
-                  <button
-                    onClick={() => handleDeleteLine(line.id)}
-                    className="text-red-500 hover:text-red-700 text-sm px-1"
-                  >
-                    ✕
-                  </button>
+                  <textarea className={`${inputCls} flex-1 resize-y min-h-[60px]`} placeholder="Description — type as much detail as you need" value={line.description ?? ""} onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, description: e.target.value } : l)))} onBlur={(e) => handleUpdateLine(line.id, { description: e.target.value })} />
+                  <input className={`${inputCls} w-32`} placeholder="Code" value={line.code ?? ""} onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, code: e.target.value } : l)))} onBlur={(e) => handleUpdateLine(line.id, { code: e.target.value })} />
+                  <button onClick={() => handleDeleteLine(line.id)} className="text-[#E08080] hover:text-[#f0a0a0] text-sm px-1">✕</button>
                 </div>
 
                 <div className="grid grid-cols-6 gap-2 items-end text-xs">
                   <div>
-                    <label className="block text-gray-500 mb-1">Unit Cost</label>
-                    <input
-                      type="number"
-                      className="w-full border rounded px-2 py-1"
-                      value={line.unit_cost}
-                      onFocus={selectAllOnFocus}
-                      onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, unit_cost: parseFloat(e.target.value) || 0 } : l)))}
-                      onBlur={(e) => handleUpdateLine(line.id, { unit_cost: parseFloat(e.target.value) || 0 })}
-                    />
+                    <label className="block text-[#8B92A0] mb-1">Unit Cost</label>
+                    <input type="number" className="w-full border border-[#2C313A] bg-[#15181D] px-2 py-1 text-[#EDEEF0]" value={line.unit_cost} onFocus={selectAllOnFocus} onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, unit_cost: parseFloat(e.target.value) || 0 } : l)))} onBlur={(e) => handleUpdateLine(line.id, { unit_cost: parseFloat(e.target.value) || 0 })} />
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1">Order Qty</label>
-                    <input
-                      type="number"
-                      className="w-full border rounded px-2 py-1"
-                      value={line.order_qty}
-                      onFocus={selectAllOnFocus}
-                      onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, order_qty: parseFloat(e.target.value) || 0 } : l)))}
-                      onBlur={(e) => handleUpdateLine(line.id, { order_qty: parseFloat(e.target.value) || 0 })}
-                    />
+                    <label className="block text-[#8B92A0] mb-1">Order Qty</label>
+                    <input type="number" className="w-full border border-[#2C313A] bg-[#15181D] px-2 py-1 text-[#EDEEF0]" value={line.order_qty} onFocus={selectAllOnFocus} onChange={(e) => setLines((prev) => prev.map((l) => (l.id === line.id ? { ...l, order_qty: parseFloat(e.target.value) || 0 } : l)))} onBlur={(e) => handleUpdateLine(line.id, { order_qty: parseFloat(e.target.value) || 0 })} />
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-gray-500 mb-1">Tier Used</label>
-                    <select
-                      className="w-full border rounded px-2 py-1"
-                      value={line.tier_used_id ?? ""}
-                      onChange={(e) => handleUpdateLine(line.id, { tier_used_id: e.target.value || null })}
-                    >
+                    <label className="block text-[#8B92A0] mb-1">Tier Used</label>
+                    <select className="w-full border border-[#2C313A] bg-[#15181D] px-2 py-1 text-[#EDEEF0]" value={line.tier_used_id ?? ""} onChange={(e) => handleUpdateLine(line.id, { tier_used_id: e.target.value || null })}>
                       <option value="">— Select tier —</option>
-                      {tiers.map((t) => (
-                        <option key={t.id} value={t.id}>Tier {t.tier_number} ({t.margin_percent}%)</option>
-                      ))}
+                      {tiers.map((t) => (<option key={t.id} value={t.id}>Tier {t.tier_number} ({t.margin_percent}%)</option>))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1">Sell / Unit</label>
-                    <div className="px-2 py-1 font-medium">
-                      {sellPrice !== null ? `$${sellPrice.toFixed(2)}` : "—"}
-                    </div>
+                    <label className="block text-[#8B92A0] mb-1">Sell / Unit</label>
+                    <div className="px-2 py-1 font-mono text-[#EDEEF0]">{sellPrice !== null ? `$${sellPrice.toFixed(2)}` : "—"}</div>
                   </div>
                   <div>
-                    <label className="block text-gray-500 mb-1">Line Total</label>
-                    <div className="px-2 py-1 font-medium">${total.toFixed(2)}</div>
+                    <label className="block text-[#8B92A0] mb-1">Line Total</label>
+                    <div className="px-2 py-1 font-mono text-[#EDEEF0]">${total.toFixed(2)}</div>
                   </div>
                 </div>
 
                 {nodeOptions.length > 0 && (
                   <div className="text-xs">
-                    <label className="block text-gray-500 mb-1">Linked Task</label>
-                    <select
-                      className="w-full border rounded px-2 py-1"
-                      value={line.linked_node_id ?? ""}
-                      onChange={(e) => handleUpdateLine(line.id, { linked_node_id: e.target.value || null })}
-                    >
+                    <label className="block text-[#8B92A0] mb-1">Linked Task</label>
+                    <select className="w-full border border-[#2C313A] bg-[#15181D] px-2 py-1 text-[#EDEEF0]" value={line.linked_node_id ?? ""} onChange={(e) => handleUpdateLine(line.id, { linked_node_id: e.target.value || null })}>
                       <option value="">—</option>
-                      {nodeOptions.map((n) => (
-                        <option key={n.id} value={n.id}>{n.name}</option>
-                      ))}
+                      {nodeOptions.map((n) => (<option key={n.id} value={n.id}>{n.name}</option>))}
                     </select>
                   </div>
                 )}
@@ -466,110 +376,52 @@ export default function QuoteBuilder({
             );
           })}
         </div>
-        <button
-          onClick={handleAddLine}
-          className="mt-3 text-sm text-blue-600 hover:underline"
-        >
-          + Add row
-        </button>
+        <button onClick={handleAddLine} className="mt-3 text-sm text-[#4FA8D8] hover:underline">+ Add row</button>
       </div>
 
-      <div className="border rounded-md p-4">
+      <div className={cardCls}>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-medium text-sm">Freight (whole job)</h3>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={freightIncluded}
-              onChange={(e) => handleFreightIncludedChange(e.target.checked)}
-            />
+          <h3 className="text-sm font-medium text-[#EDEEF0]">Freight (whole job)</h3>
+          <label className="flex items-center gap-2 text-sm text-[#8B92A0]">
+            <input type="checkbox" checked={freightIncluded} onChange={(e) => handleFreightIncludedChange(e.target.checked)} />
             Include freight in this quote
           </label>
         </div>
         {freightIncluded ? (
           <>
-            <p className="text-xs text-gray-500 mb-2">One freight line for the entire quote — not divided across line items.</p>
+            <p className="text-xs text-[#8B92A0] mb-2">One freight line for the entire quote — not divided across line items.</p>
             <div className="grid grid-cols-4 gap-3 items-end">
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Freight Cost ($)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="w-full border rounded px-2 py-1.5 text-sm"
-                  value={freightCostInput}
-                  onFocus={(e) => setTimeout(() => e.target.select(), 0)}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightCostInput(v);
-                  }}
-                  onBlur={() => {
-                    if (freightCostInput === "") setFreightCostInput("0");
-                    handleFreightBlur();
-                  }}
-                />
+                <label className={labelCls}>Freight Cost ($)</label>
+                <input type="text" inputMode="decimal" className={inputCls} value={freightCostInput} onFocus={(e) => setTimeout(() => e.target.select(), 0)} onChange={(e) => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightCostInput(v); }} onBlur={() => { if (freightCostInput === "") setFreightCostInput("0"); handleFreightBlur(); }} />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Margin (%)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  className="w-full border rounded px-2 py-1.5 text-sm"
-                  value={freightMarginInput}
-                  onFocus={(e) => setTimeout(() => e.target.select(), 0)}
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightMarginInput(v);
-                  }}
-                  onBlur={() => {
-                    if (freightMarginInput === "") setFreightMarginInput("0");
-                    handleFreightBlur();
-                  }}
-                />
+                <label className={labelCls}>Margin (%)</label>
+                <input type="text" inputMode="decimal" className={inputCls} value={freightMarginInput} onFocus={(e) => setTimeout(() => e.target.select(), 0)} onChange={(e) => { const v = e.target.value; if (v === "" || /^\d*\.?\d*$/.test(v)) setFreightMarginInput(v); }} onBlur={() => { if (freightMarginInput === "") setFreightMarginInput("0"); handleFreightBlur(); }} />
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Freight Sell</label>
-                <div className="px-2 py-1.5 text-sm font-medium border rounded bg-gray-50">
-                  ${freightSellPrice.toFixed(2)}
-                </div>
+                <label className={labelCls}>Freight Sell</label>
+                <div className="px-2 py-1.5 text-sm font-mono text-[#F0A83A] border border-[#2C313A] bg-[#15181D]">${freightSellPrice.toFixed(2)}</div>
               </div>
               <div>
-                <label className="block text-xs text-gray-500 mb-1">Notes</label>
-                <input
-                  className="w-full border rounded px-2 py-1.5 text-sm"
-                  value={freightNotes}
-                  onChange={(e) => setFreightNotes(e.target.value)}
-                  onBlur={handleFreightBlur}
-                />
+                <label className={labelCls}>Notes</label>
+                <input className={inputCls} value={freightNotes} onChange={(e) => setFreightNotes(e.target.value)} onBlur={handleFreightBlur} />
               </div>
             </div>
           </>
         ) : (
-          <p className="text-sm text-gray-400">Freight not included in this quote.</p>
+          <p className="text-sm text-[#565C68]">Freight not included in this quote.</p>
         )}
       </div>
 
-      <div className="border rounded-md p-4 bg-gray-50">
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">Line items total</span>
-          <span>${linesSum.toFixed(2)}</span>
-        </div>
-        {freightIncluded && (
-          <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Freight (sell)</span>
-            <span>${effectiveFreight.toFixed(2)}</span>
-          </div>
-        )}
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">Subtotal (Ex GST)</span>
-          <span>${grandTotalExGst.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-sm mb-1">
-          <span className="text-gray-600">GST (10%)</span>
-          <span>${gstAmount.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-base font-semibold border-t pt-2 mt-2">
+      <div className={`${cardCls} bg-[#1E2229]`}>
+        <div className="flex justify-between text-sm mb-1"><span className="text-[#8B92A0]">Line items total</span><span className="font-mono text-[#EDEEF0]">${linesSum.toFixed(2)}</span></div>
+        {freightIncluded && (<div className="flex justify-between text-sm mb-1"><span className="text-[#8B92A0]">Freight (sell)</span><span className="font-mono text-[#EDEEF0]">${effectiveFreight.toFixed(2)}</span></div>)}
+        <div className="flex justify-between text-sm mb-1"><span className="text-[#8B92A0]">Subtotal (Ex GST)</span><span className="font-mono text-[#EDEEF0]">${grandTotalExGst.toFixed(2)}</span></div>
+        <div className="flex justify-between text-sm mb-1"><span className="text-[#8B92A0]">GST (10%)</span><span className="font-mono text-[#EDEEF0]">${gstAmount.toFixed(2)}</span></div>
+        <div className="flex justify-between text-base font-semibold border-t border-[#2C313A] pt-2 mt-2 text-[#EDEEF0]">
           <span>Grand Total ({pricingMode === "inc_gst" ? "Inc GST" : "Ex GST"}, {rounding === "none" ? "unrounded" : "rounded"})</span>
-          <span>${displayTotal.toFixed(2)}</span>
+          <span className="font-mono text-[#F0A83A]">${displayTotal.toFixed(2)}</span>
         </div>
       </div>
     </div>
