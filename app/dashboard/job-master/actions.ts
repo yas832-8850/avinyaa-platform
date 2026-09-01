@@ -95,6 +95,25 @@ export async function createJobMaster(
 ) {
   const supabase = await createClient();
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  // Determined server-side from the actual logged-in user's role, never trusted
+  // from the client — this is what keeps a client-created job correctly marked
+  // as private, regardless of what the browser sends.
+  const createdByClient = profile?.role !== "super_admin";
+
   let jobNumber: string;
   let jobNumberValue: number | null;
 
@@ -130,6 +149,7 @@ export async function createJobMaster(
       job_number_value: jobNumberValue,
       client,
       client_org_id: clientOrgId,
+      created_by_client: createdByClient,
       project_name: projectName,
       account_manager: accountManager,
       client_contact: clientContact,
@@ -147,10 +167,11 @@ export async function createJobMaster(
   return { success: true, job: data };
 }
 
-// isSuperAdmin: sees every job_master row for the master org.
-// Non-admin (client_admin): sees only rows where client_org_id matches their OWN org
-// (viewerOrgId) — NOT filtered by their own org_id against jobs_master.org_id, because
-// jobs_master.org_id is always the master (Avinyaa) org, never the client's own org.
+// isSuperAdmin: sees every job_master row for the master org that was NOT
+// created by a client themselves — a client's self-created job stays private
+// to that client, invisible even to super_admin, per explicit confirmation.
+// Non-admin (client_admin): sees only rows where client_org_id matches their
+// OWN org (viewerOrgId), regardless of who created them.
 export async function getJobsMaster(isSuperAdmin: boolean, viewerOrgId: string) {
   const supabase = await createClient();
 
@@ -171,7 +192,9 @@ export async function getJobsMaster(isSuperAdmin: boolean, viewerOrgId: string) 
     .eq("org_id", masterOrg.id)
     .order("created_at", { ascending: false });
 
-  if (!isSuperAdmin) {
+  if (isSuperAdmin) {
+    query = query.eq("created_by_client", false);
+  } else {
     query = query.eq("client_org_id", viewerOrgId);
   }
 
