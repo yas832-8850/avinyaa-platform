@@ -12,11 +12,19 @@ type ClientOrg = {
   name: string;
 };
 
-export default function NewJobMasterForm({ orgId }: { orgId: string }) {
+export default function NewJobMasterForm({
+  orgId,
+  isSuperAdmin,
+  viewerOrgId,
+}: {
+  orgId: string;
+  isSuperAdmin: boolean;
+  viewerOrgId: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [clientOrgs, setClientOrgs] = useState<ClientOrg[]>([]);
-  const [clientOrgId, setClientOrgId] = useState("");
+  const [clientOrgId, setClientOrgId] = useState(isSuperAdmin ? "" : viewerOrgId);
   const [projectName, setProjectName] = useState("");
   const [accountManager, setAccountManager] = useState("");
   const [clientContact, setClientContact] = useState("");
@@ -27,10 +35,10 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
+    if (open && isSuperAdmin) {
       getClientOrgs().then(setClientOrgs);
     }
-  }, [open]);
+  }, [open, isSuperAdmin]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,8 +49,11 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
       return;
     }
 
-    const selectedClient = clientOrgs.find((c) => c.id === clientOrgId);
-    const clientName = selectedClient ? selectedClient.name : "";
+    let clientName = "";
+    if (isSuperAdmin) {
+      const selectedClient = clientOrgs.find((c) => c.id === clientOrgId);
+      clientName = selectedClient ? selectedClient.name : "";
+    }
 
     setSubmitting(true);
     const result = await createJobMaster(
@@ -63,7 +74,7 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
       return;
     }
 
-    setClientOrgId("");
+    if (isSuperAdmin) setClientOrgId("");
     setProjectName("");
     setAccountManager("");
     setClientContact("");
@@ -81,20 +92,24 @@ export default function NewJobMasterForm({ orgId }: { orgId: string }) {
   return (
     <form onSubmit={handleSubmit} className="border border-[#2C313A] bg-[#1E2229] p-4 space-y-3">
       <div className="grid grid-cols-2 gap-3">
-        <Select label="Client *" value={clientOrgId} onChange={(e) => setClientOrgId(e.target.value)}>
-          <option value="">— Select client —</option>
-          {clientOrgs.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+        {isSuperAdmin && (
+          <Select label="Client *" value={clientOrgId} onChange={(e) => setClientOrgId(e.target.value)}>
+            <option value="">— Select client —</option>
+            {clientOrgs.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </Select>
+        )}
         <Input label="Project name *" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
         <Input label="Account manager" value={accountManager} onChange={(e) => setAccountManager(e.target.value)} />
         <Input label="Client contact" value={clientContact} onChange={(e) => setClientContact(e.target.value)} />
         <Input label="Date" type="date" value={jobDate} onChange={(e) => setJobDate(e.target.value)} />
         <Input label="Server link (URL)" value={serverLink} onChange={(e) => setServerLink(e.target.value)} />
-        <div className="col-span-2">
-          <Input label="Custom job number (optional — leave blank to auto-generate)" value={customJobNumber} onChange={(e) => setCustomJobNumber(e.target.value)} />
-        </div>
+        {isSuperAdmin && (
+          <div className="col-span-2">
+            <Input label="Custom job number (optional — leave blank to auto-generate)" value={customJobNumber} onChange={(e) => setCustomJobNumber(e.target.value)} />
+          </div>
+        )}
       </div>
 
       {error && (

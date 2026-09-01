@@ -60,10 +60,32 @@ export async function getClientOrgs() {
 
   return data ?? [];
 }
+
+// The single master (Avinyaa) org that all jobs_master rows belong to, regardless of
+// who is viewing/creating them. Used anywhere jobs_master.org_id or
+// job_number_sequences.org_id is needed — never the logged-in user's own org_id,
+// since a client's own org_id is a different value entirely.
+export async function getMasterOrgId(): Promise<string | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("type", "master")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Failed to load master org:", error?.message);
+    return null;
+  }
+
+  return data.id;
+}
+
 export async function createJobMaster(
   orgId: string,
   client: string,
-    clientOrgId: string | null,
+  clientOrgId: string | null,
   projectName: string,
   accountManager: string,
   clientContact: string,
@@ -107,7 +129,7 @@ export async function createJobMaster(
       job_number: jobNumber,
       job_number_value: jobNumberValue,
       client,
-            client_org_id: clientOrgId,
+      client_org_id: clientOrgId,
       project_name: projectName,
       account_manager: accountManager,
       client_contact: clientContact,
@@ -125,13 +147,35 @@ export async function createJobMaster(
   return { success: true, job: data };
 }
 
-export async function getJobsMaster(orgId: string) {
+// isSuperAdmin: sees every job_master row for the master org.
+// Non-admin (client_admin): sees only rows where client_org_id matches their OWN org
+// (viewerOrgId) — NOT filtered by their own org_id against jobs_master.org_id, because
+// jobs_master.org_id is always the master (Avinyaa) org, never the client's own org.
+export async function getJobsMaster(isSuperAdmin: boolean, viewerOrgId: string) {
   const supabase = await createClient();
-  const { data, error } = await supabase
+
+  const { data: masterOrg } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("type", "master")
+    .maybeSingle();
+
+  if (!masterOrg) {
+    console.error("No master organisation found.");
+    return [];
+  }
+
+  let query = supabase
     .from("jobs_master")
     .select("*")
-    .eq("org_id", orgId)
+    .eq("org_id", masterOrg.id)
     .order("created_at", { ascending: false });
+
+  if (!isSuperAdmin) {
+    query = query.eq("client_org_id", viewerOrgId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Failed to load jobs master:", error.message);
