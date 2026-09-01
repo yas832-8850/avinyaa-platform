@@ -114,6 +114,13 @@ export async function createJobMaster(
   // as private, regardless of what the browser sends.
   const createdByClient = profile?.role !== "super_admin";
 
+  // Job numbering is scoped PER CLIENT, not per master org — every job for a
+  // given client (whether created by that client themselves, or by staff on
+  // their behalf) shares one continuous, client-specific sequence. This is
+  // deliberately different from jobs_master.org_id below, which always stays
+  // the master org regardless of numbering scope.
+  const numberingScopeOrgId = clientOrgId ?? orgId;
+
   let jobNumber: string;
   let jobNumberValue: number | null;
 
@@ -121,7 +128,7 @@ export async function createJobMaster(
     const { data: clash } = await supabase
       .from("jobs_master")
       .select("id")
-      .eq("org_id", orgId)
+      .eq("client_org_id", numberingScopeOrgId)
       .eq("job_number", customJobNumber.trim())
       .maybeSingle();
 
@@ -133,7 +140,7 @@ export async function createJobMaster(
     const parsed = Number(jobNumber);
     jobNumberValue = Number.isInteger(parsed) ? parsed : null;
   } else {
-    const result = await getNextJobNumber(orgId);
+    const result = await getNextJobNumber(numberingScopeOrgId);
     if (result.error || !result.jobNumber || result.jobNumberValue === undefined) {
       return { error: result.error ?? "Could not generate job number." };
     }

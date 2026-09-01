@@ -1,7 +1,8 @@
-import { getJobsMaster, getMasterOrgId } from "./actions";
+import { getJobsMaster, getMasterOrgId, getClientOrgs } from "./actions";
 import NewJobMasterForm from "./new-job-master-form";
 import JobsMasterTable from "./jobs-master-table";
 import SequenceSettings from "./sequence-settings";
+import StaffNumberingPicker from "./staff-numbering-picker";
 import { getAuthContext } from "@/lib/auth";
 
 export default async function JobMasterPage() {
@@ -9,6 +10,7 @@ export default async function JobMasterPage() {
 
   const masterOrgId = await getMasterOrgId();
   const jobs = await getJobsMaster(isSuperAdmin, viewerOrgId);
+  const clientOrgs = isSuperAdmin ? await getClientOrgs() : [];
 
   return (
     <div className="min-h-screen bg-[#15181D] p-6">
@@ -18,11 +20,16 @@ export default async function JobMasterPage() {
         {masterOrgId && (
           <NewJobMasterForm orgId={masterOrgId} isSuperAdmin={isSuperAdmin} viewerOrgId={viewerOrgId} />
         )}
-        {isSuperAdmin && masterOrgId && (
+
+        {isSuperAdmin ? (
+          <StaffNumberingPicker clientOrgs={clientOrgs} />
+        ) : (
           <div className="my-4">
-            <SequenceSettings orgId={masterOrgId} />
+            <p className="text-xs uppercase tracking-[0.1em] text-[#8B92A0] mb-2">Your Job Numbering</p>
+            <SequenceSettings orgId={viewerOrgId} />
           </div>
         )}
+
         <JobsMasterTable jobs={jobs} />
       </div>
     </div>
