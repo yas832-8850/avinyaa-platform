@@ -22,6 +22,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="text-[10px] text-[#8B92A0] uppercase tracking-[0.15em] mt-5 mb-2">Admin</div>
         <Link href="/dashboard/settings" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Settings</Link>
 
+        <div className="mt-6 pt-4 border-t border-[#2C313A]"><a href="/dashboard/account" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Account Settings</a></div>
         <div className="mt-6 pt-4 border-t border-[#2C313A]">
           <SignOutButton />
         </div>
