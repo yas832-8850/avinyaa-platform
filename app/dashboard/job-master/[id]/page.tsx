@@ -1,7 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getJobNodes, getBoardStatuses, getAssignees } from "./actions";
+import { getMasterOrgId } from "../actions";
 import JobNodeTree from "./job-node-tree";
+import { getAuthContext } from "@/lib/auth";
 
 export default async function JobDetailPage({
   params,
@@ -9,17 +10,7 @@ export default async function JobDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("org_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) redirect("/login");
+  const { supabase, orgId: viewerOrgId, isSuperAdmin } = await getAuthContext();
 
   const { data: job } = await supabase
     .from("jobs_master")
@@ -29,10 +20,24 @@ export default async function JobDetailPage({
 
   if (!job) notFound();
 
+  // Access rule, mirrors the Job Master list page (6as): a client can only
+  // open a board for a job that's actually theirs. Staff can open any board
+  // EXCEPT one a client created privately for themselves — that stays
+  // invisible to staff, same privacy rule as the list.
+  if (!isSuperAdmin && job.client_org_id !== viewerOrgId) {
+    notFound();
+  }
+  if (isSuperAdmin && job.created_by_client) {
+    notFound();
+  }
+
+  const masterOrgId = await getMasterOrgId();
+  if (!masterOrgId) notFound();
+
   const [nodes, statuses, assignees] = await Promise.all([
     getJobNodes(id),
-    getBoardStatuses(profile.org_id),
-    getAssignees(profile.org_id),
+    getBoardStatuses(masterOrgId),
+    getAssignees(masterOrgId),
   ]);
 
   return (
@@ -46,7 +51,7 @@ export default async function JobDetailPage({
 
         <JobNodeTree
           jobId={id}
-          orgId={profile.org_id}
+          orgId={masterOrgId}
           initialNodes={nodes}
           statuses={statuses}
           initialAssignees={assignees}
