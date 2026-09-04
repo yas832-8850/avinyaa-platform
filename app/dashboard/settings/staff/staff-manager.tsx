@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createStaffAccount, setStaffPermission } from "@/lib/staff";
+import { useRouter } from "next/navigation";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
 import Select from "../../../components/ui/Select";
@@ -27,7 +28,8 @@ type StaffMember = {
 };
 
 export default function StaffManager({ initialStaff }: { initialStaff: StaffMember[] }) {
-  const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
+  const router = useRouter();
+    const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -49,7 +51,7 @@ export default function StaffManager({ initialStaff }: { initialStaff: StaffMemb
     setCreatedCreds({ email: result.email!, tempPassword: result.tempPassword! });
     setEmail("");
     setFullName("");
-    window.location.reload();
+    router.refresh();
   }
 
   async function handlePermissionChange(staffId: string, moduleKey: string, level: string) {
