@@ -115,3 +115,35 @@ export async function setStaffPermission(
   if (error) return { error: error.message };
   return { success: true };
 }
+export async function deleteStaffAccount(staffUserId: string) {
+  const { orgId, role } = await getAuthContext();
+
+  if (role !== "super_admin" && role !== "client_admin" && role !== "avinyaa_master") {
+    return { error: "Only a master account can delete staff." };
+  }
+
+  const adminClient = createAdminClient();
+
+  // Confirm this staff member actually belongs to the caller's own org,
+  // before deleting anything — prevents one org's master from deleting
+  // another org's staff by guessing an id.
+  const { data: staffProfile } = await adminClient
+    .from("profiles")
+    .select("org_id")
+    .eq("id", staffUserId)
+    .single();
+
+  if (!staffProfile || (role !== "super_admin" && staffProfile.org_id !== orgId)) {
+    return { error: "Staff member not found in your organisation." };
+  }
+
+  await adminClient.from("staff_permissions").delete().eq("user_id", staffUserId);
+  await adminClient.from("profiles").delete().eq("id", staffUserId);
+
+  const { error: authError } = await adminClient.auth.admin.deleteUser(staffUserId);
+  if (authError) {
+    return { error: authError.message };
+  }
+
+  return { success: true };
+}

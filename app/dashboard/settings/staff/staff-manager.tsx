@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createStaffAccount, setStaffPermission } from "@/lib/staff";
+import { createStaffAccount, setStaffPermission, deleteStaffAccount } from "@/lib/staff";
 import { useRouter } from "next/navigation";
 import Button from "../../../components/ui/Button";
 import Input from "../../../components/ui/Input";
@@ -29,7 +29,7 @@ type StaffMember = {
 
 export default function StaffManager({ initialStaff }: { initialStaff: StaffMember[] }) {
   const router = useRouter();
-    const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
+  const [staff, setStaff] = useState<StaffMember[]>(initialStaff);
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -52,6 +52,13 @@ export default function StaffManager({ initialStaff }: { initialStaff: StaffMemb
     setEmail("");
     setFullName("");
     router.refresh();
+  }
+
+  async function handleDelete(staffId: string, name: string | null) {
+    const confirmed = window.confirm(`Delete ${name ?? "this staff member"}? This can't be undone — their login will stop working immediately.`);
+    if (!confirmed) return;
+    setStaff((prev) => prev.filter((s) => s.id !== staffId));
+    await deleteStaffAccount(staffId);
   }
 
   async function handlePermissionChange(staffId: string, moduleKey: string, level: string) {
@@ -99,12 +106,13 @@ export default function StaffManager({ initialStaff }: { initialStaff: StaffMemb
               {MODULES.map((m) => (
                 <th key={m.key} className="px-3 py-3">{m.label}</th>
               ))}
+              <th className="px-3 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {staff.length === 0 && (
               <tr>
-                <td colSpan={MODULES.length + 1} className="p-4 text-center text-[#8B92A0]">
+                <td colSpan={MODULES.length + 2} className="p-4 text-center text-[#8B92A0]">
                   No staff yet — add one above.
                 </td>
               </tr>
@@ -128,6 +136,9 @@ export default function StaffManager({ initialStaff }: { initialStaff: StaffMemb
                     </td>
                   );
                 })}
+                <td className="px-3 py-3">
+                  <button onClick={() => handleDelete(s.id, s.full_name)} className="text-[#E08080] hover:text-[#f0a0a0] text-xs">Delete</button>
+                </td>
               </tr>
             ))}
           </tbody>
