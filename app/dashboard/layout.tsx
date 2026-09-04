@@ -11,6 +11,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div className="text-[10px] text-[#8B92A0] uppercase tracking-[0.15em] mt-4 mb-2">Freight</div>
         <Link href="/dashboard/jobs" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Jobs</Link>
         <Link href="/dashboard/jobs/new/multi-line" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">New Booking</Link>
+        <Link href="/dashboard/jobs/new" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Book for Client</Link>
         <Link href="/dashboard/carriers" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Carriers</Link>
         <Link href="/dashboard/margin-rules" className="block text-sm py-1.5 px-2 text-[#EDEEF0] hover:bg-[#15181D] hover:text-[#F0A83A]">Margin Rules</Link>
 
