@@ -20,6 +20,11 @@ export default function SettingsHubPage() {
       description: "Manage installers for rollout planning and job allocation.",
       href: "/dashboard/settings/installers",
     },
+        {
+      title: "Manage Staff",
+      description: "Create staff accounts and set what they can access.",
+      href: "/dashboard/settings/staff",
+    },
   ];
 
   return (
