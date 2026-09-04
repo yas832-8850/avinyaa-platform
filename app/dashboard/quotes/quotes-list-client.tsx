@@ -11,6 +11,8 @@ type Quote = {
   id: string;
   quote_name: string;
   created_at: string;
+  created_by_client: boolean;
+  shared_with_staff: boolean;
   jobs_master: { job_number: string; project_name: string } | null;
 };
 
@@ -20,30 +22,44 @@ type JobOption = {
   project_name: string | null;
 };
 
+type ClientOrg = {
+  id: string;
+  name: string;
+};
+
 export default function QuotesListClient({
-  orgId,
+  masterOrgId,
+  viewerOrgId,
+  isSuperAdmin,
+  clientOrgs,
   initialQuotes,
 }: {
-  orgId: string;
+  masterOrgId: string;
+  viewerOrgId: string;
+  isSuperAdmin: boolean;
+  clientOrgs: ClientOrg[];
   initialQuotes: Quote[];
 }) {
   const router = useRouter();
   const [creating, setCreating] = useState(false);
   const [newQuoteName, setNewQuoteName] = useState("");
   const [selectedJobId, setSelectedJobId] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState(isSuperAdmin ? "" : viewerOrgId);
   const [jobOptions, setJobOptions] = useState<JobOption[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (creating && jobOptions.length === 0) {
-      getJobsForDropdown(orgId).then(setJobOptions);
+      getJobsForDropdown(isSuperAdmin, viewerOrgId).then(setJobOptions);
     }
-  }, [creating, orgId, jobOptions.length]);
+  }, [creating, isSuperAdmin, viewerOrgId, jobOptions.length]);
 
   async function handleCreate() {
     if (!newQuoteName.trim()) return;
+    if (isSuperAdmin && !selectedClientId) return;
+
     setSubmitting(true);
-    const result = await createQuote(orgId, newQuoteName.trim(), selectedJobId || null);
+    const result = await createQuote(masterOrgId, newQuoteName.trim(), selectedJobId || null, selectedClientId || null);
     setSubmitting(false);
 
     if (result.success && result.quote) {
@@ -59,6 +75,14 @@ export default function QuotesListClient({
         </div>
       ) : (
         <div className="border border-[#2C313A] bg-[#1E2229] p-4 mb-6 space-y-3">
+          {isSuperAdmin && (
+            <Select value={selectedClientId} onChange={(e) => setSelectedClientId(e.target.value)}>
+              <option value="">— Select client * —</option>
+              {clientOrgs.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+          )}
           <Input autoFocus placeholder="Quote name" value={newQuoteName} onChange={(e) => setNewQuoteName(e.target.value)} />
           <Select value={selectedJobId} onChange={(e) => setSelectedJobId(e.target.value)}>
             <option value="">— No linked project —</option>
@@ -67,7 +91,7 @@ export default function QuotesListClient({
             ))}
           </Select>
           <div className="flex gap-2">
-            <Button variant="primary" onClick={handleCreate} disabled={submitting || !newQuoteName.trim()}>
+            <Button variant="primary" onClick={handleCreate} disabled={submitting || !newQuoteName.trim() || (isSuperAdmin && !selectedClientId)}>
               {submitting ? "Creating..." : "Create Quote"}
             </Button>
             <Button variant="secondary" onClick={() => setCreating(false)}>Cancel</Button>
@@ -82,7 +106,14 @@ export default function QuotesListClient({
         {initialQuotes.map((q) => (
           <a key={q.id} href={`/dashboard/quotes/${q.id}`} className="flex items-center justify-between p-3 hover:bg-[#1E2229]">
             <div>
-              <div className="text-sm font-medium text-[#EDEEF0]">{q.quote_name}</div>
+              <div className="text-sm font-medium text-[#EDEEF0] flex items-center gap-2">
+                {q.quote_name}
+                {q.created_by_client && (
+                  <span className="text-[10px] uppercase tracking-[0.1em] border border-[#2C313A] px-1.5 py-0.5 text-[#8B92A0]">
+                    {q.shared_with_staff ? "Shared" : "Private"}
+                  </span>
+                )}
+              </div>
               {q.jobs_master && (
                 <div className="text-xs text-[#8B92A0] font-mono">{q.jobs_master.job_number} — {q.jobs_master.project_name}</div>
               )}

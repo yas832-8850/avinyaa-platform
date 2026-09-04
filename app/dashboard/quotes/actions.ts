@@ -3,21 +3,74 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
-export async function getQuotes(orgId: string) {
+export async function getMasterOrgId(): Promise<string | null> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
+    .from("organisations")
+    .select("id")
+    .eq("type", "master")
+    .maybeSingle();
+
+  if (error || !data) {
+    console.error("Failed to load master org:", error?.message);
+    return null;
+  }
+
+  return data.id;
+}
+
+export async function getClientOrgs() {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("id, name")
+    .eq("type", "client")
+    .order("name");
+
+  if (error) {
+    console.error("Failed to load client orgs:", error.message);
+    return [];
+  }
+
+  return data ?? [];
+}
+
+// isSuperAdmin: sees every quote for the master org EXCEPT ones a client created
+// privately for themselves (created_by_client && !shared_with_staff).
+// Non-admin (client_admin): sees only quotes where client_org_id matches their
+// own org (viewerOrgId), regardless of who created them.
+export async function getQuotes(isSuperAdmin: boolean, viewerOrgId: string) {
+  const supabase = await createClient();
+
+  const masterOrgId = await getMasterOrgId();
+  if (!masterOrgId) return [];
+
+  let query = supabase
     .from("quotes")
     .select("*, jobs_master(job_number, project_name)")
-    .eq("org_id", orgId)
+    .eq("org_id", masterOrgId)
     .order("created_at", { ascending: false });
+
+  if (!isSuperAdmin) {
+    query = query.eq("client_org_id", viewerOrgId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Failed to load quotes:", error.message);
     return [];
   }
 
-  return data ?? [];
+  const quotes = data ?? [];
+
+  if (isSuperAdmin) {
+    return quotes.filter((q: any) => !q.created_by_client || q.shared_with_staff);
+  }
+
+  return quotes;
 }
 
 export async function getQuote(quoteId: string) {
@@ -59,8 +112,29 @@ export async function getQuote(quoteId: string) {
   };
 }
 
-export async function createQuote(orgId: string, quoteName: string, jobId: string | null) {
+export async function createQuote(
+  orgId: string,
+  quoteName: string,
+  jobId: string | null,
+  clientOrgId: string | null
+) {
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated." };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const createdByClient = profile?.role !== "super_admin";
 
   const { data, error } = await supabase
     .from("quotes")
@@ -68,6 +142,8 @@ export async function createQuote(orgId: string, quoteName: string, jobId: strin
       org_id: orgId,
       quote_name: quoteName,
       job_id: jobId,
+      client_org_id: clientOrgId,
+      created_by_client: createdByClient,
     })
     .select()
     .single();
@@ -91,7 +167,15 @@ export async function createQuote(orgId: string, quoteName: string, jobId: strin
 
 export async function updateQuote(
   quoteId: string,
-  updates: { quote_name?: string; job_id?: string | null; pricing_mode?: string; rounding?: string ; bill_to_name?: string | null; bill_to_address?: string | null}
+  updates: {
+    quote_name?: string;
+    job_id?: string | null;
+    pricing_mode?: string;
+    rounding?: string;
+    bill_to_name?: string | null;
+    bill_to_address?: string | null;
+    shared_with_staff?: boolean;
+  }
 ) {
   const supabase = await createClient();
 
@@ -247,16 +331,34 @@ export async function updateQuoteFreight(
   return { success: true };
 }
 
-export async function getJobsForDropdown(orgId: string) {
+// isSuperAdmin: sees every jobs_master row for the master org (excluding
+// client-private ones, matching Job Master's own list rule).
+// Non-admin: sees only jobs where client_org_id matches their own org — a
+// client can only link a quote to their OWN project, never another client's.
+export async function getJobsForDropdown(isSuperAdmin: boolean, viewerOrgId: string) {
   const supabase = await createClient();
 
-  const { data } = await supabase
+  const masterOrgId = await getMasterOrgId();
+  if (!masterOrgId) return [];
+
+  let query = supabase
     .from("jobs_master")
-    .select("id, job_number, project_name")
-    .eq("org_id", orgId)
+    .select("id, job_number, project_name, client_org_id, created_by_client")
+    .eq("org_id", masterOrgId)
     .order("created_at", { ascending: false });
 
-  return data ?? [];
+  if (!isSuperAdmin) {
+    query = query.eq("client_org_id", viewerOrgId);
+  }
+
+  const { data } = await query;
+  const jobs = data ?? [];
+
+  if (isSuperAdmin) {
+    return jobs.filter((j: any) => !j.created_by_client);
+  }
+
+  return jobs;
 }
 
 export async function getNodesForJob(jobId: string) {

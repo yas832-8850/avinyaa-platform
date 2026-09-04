@@ -1,7 +1,8 @@
+import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { redirect, notFound } from "next/navigation";
-import { getQuote, getJobsForDropdown } from "../actions";
+import { getQuote, getJobsForDropdown, getMasterOrgId } from "../actions";
 import QuoteBuilder from "./quote-builder";
+import { getAuthContext } from "@/lib/auth";
 
 export default async function QuoteDetailPage({
   params,
@@ -9,36 +10,37 @@ export default async function QuoteDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("org_id")
-    .eq("id", user.id)
-    .single();
-
-  if (!profile) redirect("/login");
+  const { orgId: viewerOrgId, isSuperAdmin } = await getAuthContext();
 
   const result = await getQuote(id);
   if (!result) notFound();
 
-  const jobOptions = await getJobsForDropdown(profile.org_id);
+  const { quote } = result;
+
+  // Access rule, matching the Quotes model confirmed this session: a client
+  // can only open their OWN quote; staff can open any quote EXCEPT one a
+  // client created privately without sharing it.
+  if (!isSuperAdmin && quote.client_org_id !== viewerOrgId) {
+    notFound();
+  }
+  if (isSuperAdmin && quote.created_by_client && !quote.shared_with_staff) {
+    notFound();
+  }
+
+  const masterOrgId = await getMasterOrgId();
+  if (!masterOrgId) notFound();
+
+  const jobOptions = await getJobsForDropdown(isSuperAdmin, viewerOrgId);
 
   return (
-    <div className="p-6 max-w-6xl">
-      <div className="mb-4">
-        <a href="/dashboard/quotes" className="text-sm text-blue-600 hover:underline">← Back to Quotes</a>
-      </div>
-      <QuoteBuilder
-        orgId={profile.org_id}
-        initialQuote={result.quote}
-        initialTiers={result.tiers}
-        initialLines={result.lines}
-        initialFreight={result.freight}
-        jobOptions={jobOptions}
-      />
-    </div>
+    <QuoteBuilder
+      orgId={masterOrgId}
+      initialQuote={quote}
+      initialTiers={result.tiers}
+      initialLines={result.lines}
+      initialFreight={result.freight}
+      jobOptions={jobOptions}
+      isOwner={quote.client_org_id === viewerOrgId && !isSuperAdmin}
+    />
   );
 }

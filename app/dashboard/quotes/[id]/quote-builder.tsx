@@ -24,6 +24,9 @@ type Quote = {
   rounding: string | null;
   bill_to_name: string | null;
   bill_to_address: string | null;
+  client_org_id: string | null;
+  created_by_client: boolean;
+  shared_with_staff: boolean;
 };
 
 type Tier = {
@@ -84,6 +87,7 @@ export default function QuoteBuilder({
   initialLines,
   initialFreight,
   jobOptions,
+  isOwner,
 }: {
   orgId: string;
   initialQuote: Quote;
@@ -91,6 +95,7 @@ export default function QuoteBuilder({
   initialLines: Line[];
   initialFreight: Freight;
   jobOptions: JobOption[];
+  isOwner: boolean;
 }) {
   const router = useRouter();
   const [quoteName, setQuoteName] = useState(initialQuote.quote_name);
@@ -101,6 +106,7 @@ export default function QuoteBuilder({
   const [lines, setLines] = useState<Line[]>(initialLines);
   const [billToName, setBillToName] = useState(initialQuote.bill_to_name ?? "");
   const [billToAddress, setBillToAddress] = useState(initialQuote.bill_to_address ?? "");
+  const [sharedWithStaff, setSharedWithStaff] = useState(initialQuote.shared_with_staff);
 
   const [freightCostInput, setFreightCostInput] = useState(String(initialFreight?.amount ?? 0));
   const [freightMarginInput, setFreightMarginInput] = useState(String(initialFreight?.margin_percent ?? 0));
@@ -148,6 +154,11 @@ export default function QuoteBuilder({
       bill_to_name: billToName.trim() || null,
       bill_to_address: billToAddress.trim() || null,
     });
+  }
+
+  async function handleToggleShared(checked: boolean) {
+    setSharedWithStaff(checked);
+    await updateQuote(initialQuote.id, { shared_with_staff: checked });
   }
 
   async function handleTierChange(tierId: string, newMargin: number) {
@@ -301,6 +312,16 @@ export default function QuoteBuilder({
             <textarea className={`${inputCls} resize-y min-h-[38px]`} placeholder="Street, suburb, state, postcode" value={billToAddress} onChange={(e) => setBillToAddress(e.target.value)} onBlur={handleBillToBlur} />
           </div>
         </div>
+
+        {isOwner && (
+          <div className="mt-3 pt-3 border-t border-[#2C313A]">
+            <label className="flex items-center gap-2 text-sm text-[#8B92A0]">
+              <input type="checkbox" checked={sharedWithStaff} onChange={(e) => handleToggleShared(e.target.checked)} />
+              Share this quote with Avinyaa staff
+            </label>
+            <p className="text-xs text-[#565C68] mt-1">By default your quotes are private. Turn this on if you want Avinyaa to be able to see this quote.</p>
+          </div>
+        )}
 
         <div className="mt-3 pt-3 border-t border-[#2C313A] flex justify-end">
           <button onClick={handleDeleteQuote} className="text-sm text-[#E08080] hover:text-[#f0a0a0]">Delete Quote</button>
