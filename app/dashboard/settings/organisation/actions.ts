@@ -55,3 +55,34 @@ export async function uploadLogo(orgId: string, formData: FormData) {
   revalidatePath("/dashboard/settings/organisation");
   return { success: true, logoUrl: urlData.publicUrl };
 }
+export async function getShareWithAvinyaa(orgId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("organisations")
+    .select("share_with_avinyaa")
+    .eq("id", orgId)
+    .single();
+
+  if (error) {
+    console.error("Failed to load sharing setting:", error.message);
+    return false;
+  }
+
+  return data?.share_with_avinyaa ?? false;
+}
+
+export async function setShareWithAvinyaa(orgId: string, value: boolean) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("organisations")
+    .update({ share_with_avinyaa: value })
+    .eq("id", orgId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
